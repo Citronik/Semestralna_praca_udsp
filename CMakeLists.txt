@@ -3,4 +3,4 @@ project(Semestralna_praca_udsp C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(Semestralna_praca_udsp main.c Classes/user.h)
+add_executable(Semestralna_praca_udsp main.c "header_file/user.h")
