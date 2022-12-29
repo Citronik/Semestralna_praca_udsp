@@ -1,0 +1,8 @@
+//
+// Created by Filip on 29. 12. 2022.
+//
+
+#ifndef SEMESTRALNA_PRACA_UDSP_USER_H
+#define SEMESTRALNA_PRACA_UDSP_USER_H
+
+#endif //SEMESTRALNA_PRACA_UDSP_USER_H
