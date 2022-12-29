@@ -13,6 +13,7 @@ typedef struct user {
     char user_email_[USER_EMAIL_LENGTH];
     char first_name_[USER_NAME_LENGTH];
     char last_name_[USER_NAME_LENGTH];
+    char username_[USER_NAME_LENGTH];
     char password_[USER_PASSWORD_LENGTH];
     int id_;
 } USER;
