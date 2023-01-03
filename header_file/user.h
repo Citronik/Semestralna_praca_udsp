@@ -5,6 +5,12 @@
 #ifndef SEMESTRALNA_PRACA_UDSP_USER_H
 #define SEMESTRALNA_PRACA_UDSP_USER_H
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+
+
 #define USER_NAME_LENGTH 50
 #define USER_PASSWORD_LENGTH 20
 #define USER_EMAIL_LENGTH 70
@@ -17,6 +23,10 @@ typedef struct user {
     char password_[USER_PASSWORD_LENGTH];
     int id_;
 } USER;
+
+_Bool compare_users(const USER *us1, const USER *us2);
+char* user_to_string(const USER *us, char *dest);
+void recharge_credit(USER *us, double value);
 
 
 #endif //SEMESTRALNA_PRACA_UDSP_USER_H
