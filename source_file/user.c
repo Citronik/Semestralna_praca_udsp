@@ -21,7 +21,7 @@ char* user_to_string(const USER *us, char *dest) {
 }
 
 
-
+/*
 void recharge_credit(USER *us, double value) {
     if(value > 0) {
         us->credit += value;
@@ -32,3 +32,4 @@ void recharge_credit(USER *us, double value) {
     }
 
 } //toto neviem ci budeme potrebovat este
+ */
