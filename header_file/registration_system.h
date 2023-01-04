@@ -13,10 +13,10 @@ typedef struct registration_system {
 } REGISTRATION_SYSTEM;
 
 REGISTRATION_SYSTEM add_user(); //adding existing user
-REGISTRATION_SYSTEM remove_user(); // removing existing user
+REGISTRATION_SYSTEM remove_user(); // removing existing user (only from reg.system)
 void print_users(const REGISTRATION_SYSTEM *rs);
 _Bool create_user(REGISTRATION_SYSTEM *rs); // create new user
-_Bool delete_user(REGISTRATION_SYSTEM *rs);
+_Bool delete_user(REGISTRATION_SYSTEM *rs); //complete delete of user
 void reg_sys_to_string(REGISTRATION_SYSTEM *rs);
 
 #endif //SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
