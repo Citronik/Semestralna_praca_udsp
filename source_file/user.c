@@ -3,7 +3,6 @@
 //
 #include "../header_file/user.h"
 
-
 _Bool compare_users(const USER *us1, const USER *us2){
     if (strcmp(us1->first_name_,us2->first_name_) == 0){
         return true;
@@ -16,20 +15,16 @@ _Bool compare_users(const USER *us1, const USER *us2){
 
 
 char* user_to_string(const USER *us, char *dest) {
-    sprintf(dest, "User: %s %s, username:  %s, email: %s, id: %d  \n",us->first_name_,us->last_name_,us->username_,us->user_email_,us->id_);
+    sprintf(dest, "User: %s %s, username:  %s, id: %d, credit: %lf€  \n",us->first_name_,us->last_name_,us->username_,us->id_, us->credit);
     return dest;
 }
 
-
-/*
 void recharge_credit(USER *us, double value) {
     if(value > 0) {
         us->credit += value;
-        printf("Credit of the user %s %s, was increased by %.2f€ \n",us->name,us->surname,value);
-        printf("The user %s %s has credit %.2f€\n",us->name,us->surname,us->credit);
+        printf("Credit of the user %s %s, was increased by %.2f€ \n",us->first_name_,us->last_name_,value);
+        printf("The user %s %s has credit %.2f€\n",us->first_name_,us->last_name_,us->credit);
     } else {
         printf("Top-up credit must be greater than 0 euros!\n");
     }
-
-} //toto neviem ci budeme potrebovat este
- */
+}

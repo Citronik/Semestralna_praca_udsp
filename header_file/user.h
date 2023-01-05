@@ -9,18 +9,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-
+#include "../header_file/computer_component.h"
 
 #define USER_NAME_LENGTH 50
 #define USER_PASSWORD_LENGTH 20
-#define USER_EMAIL_LENGTH 70
+#define USER_MAX_COMPONENTS 10
 
 typedef struct user {
-    char user_email_[USER_EMAIL_LENGTH];
     char first_name_[USER_NAME_LENGTH];
     char last_name_[USER_NAME_LENGTH];
     char username_[USER_NAME_LENGTH];
     char password_[USER_PASSWORD_LENGTH];
+    COMPONENT owned_components[USER_MAX_COMPONENTS];
+    int number_of_owned_components;
+    double credit;
     int id_;
 } USER;
 

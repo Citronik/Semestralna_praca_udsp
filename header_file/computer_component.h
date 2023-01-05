@@ -13,7 +13,7 @@ typedef struct component {
 char manufacturer[CHARACTERS];
 char type[CHARACTERS];
 char model[CHARACTERS];
-unsigned int year_of_production;
+int year_of_production;
 double price;
 } COMPONENT;
 _Bool compare_components(const COMPONENT *cp1, const COMPONENT *cp2);

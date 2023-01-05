@@ -15,11 +15,58 @@ USER* add_user(REGISTRATION_SYSTEM *rs, USER *us) {
     }
     rs->users_[rs->number_of_users_] = * us;
     rs->number_of_users_++;
-    printf("User: %s %s , username: %s, user email: %s password: %s , ID: %d has been added to the registration system!\n",
-           us->first_name_,us->last_name_,us->username_,us->user_email_,us->password_,us->id_);
+    printf("User: %s %s , username: %s, password: %s, ID: %d credit: %lf €, has been added to the registration system!\n",
+           us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit);
+    us->number_of_owned_components = 0;
     return &rs->users_[rs->number_of_users_-1];
 
 }
+
+COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp) {
+    if (rs->number_of_components >= CAPACITY) {
+        printf("Maximum capacity has been reached!\n");
+        return NULL;
+    }
+    for (int i = 0; i < rs->number_of_components; i++) {
+        if (compare_components(cp, &rs->components_[i])){
+            return &rs->components_[i];
+        }
+    }
+    rs->components_[rs->number_of_components] = * cp;
+    rs->number_of_users_++;
+    printf("Adding the component: \n");
+    printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %lf\n",
+           cp->manufacturer,cp->type,cp->model,cp->year_of_production,cp->price);
+    return &rs->components_[rs->number_of_components-1];
+}
+
+
+COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp){
+    if (rs->number_of_components == 0) {
+        printf("There are not any computer components in the system!\n");
+        return false;
+    }
+
+    for(int i = 0; i < rs->number_of_components; i++) {
+        if(compare_components(&rs->components_[i], cp)){
+            *cp = rs->components_[i];
+            rs->components_[i] = rs->components_[rs->number_of_components - 1];
+            rs->components_[rs->number_of_components - 1] = rs->components_[rs->number_of_components + 1];
+            rs->number_of_components--;
+        }
+    }
+    printf("Removing the component: \n");
+    printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %lf\n",
+           cp->manufacturer,cp->type,cp->model,cp->year_of_production,cp->price);
+
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (!compare_components(cp, &rs->components_[i])){
+            return &rs->components_[i];
+        }
+        printf("Component is not in the registration system\n");
+    }
+}
+
 
 USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
     if (rs->number_of_users_ == 0) {
@@ -35,8 +82,8 @@ USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
             rs->number_of_users_--;
         }
     }
-    printf("User: %s %s , username: %s, user email: %s password: %s , ID: %d has been removed from the registration system!\n",
-           us->first_name_,us->last_name_,us->username_,us->user_email_,us->password_,us->id_);
+    printf("User: %s %s , username: %s, password: %s, ID: %d credit: %lf €, has been removed from the registration system!\n",
+           us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit);
 
     for (int i = 0; i < rs->number_of_users_; i++) {
         if (!compare_users(us, &rs->users_[i])){
@@ -58,14 +105,26 @@ void print_users(const REGISTRATION_SYSTEM *rs) {
     }
 }
 
-_Bool create_user(REGISTRATION_SYSTEM *rs) {
+void print_components(const REGISTRATION_SYSTEM *rs) {
+    if (rs->number_of_components <= 0) {
+        printf("There are not any users in the system!\n");
+    }
+    char tmpStr[BUFFER];
+    for (int i = 0; i < rs->number_of_components; i++) {
+        component_to_string(&rs->components_[i], tmpStr);
+        printf("%s", tmpStr);
+    }
+}
+
+
+_Bool registrate_user(REGISTRATION_SYSTEM *rs) {
     USER tmp_user;
     char tmp_first_name[USER_NAME_LENGTH];
     char tmp_last_name[USER_NAME_LENGTH];
     char tmp_username[USER_NAME_LENGTH];
-    char tmp_email[USER_EMAIL_LENGTH];
     char tmp_password[USER_PASSWORD_LENGTH];
     int tmp_id;
+    double tmp_credit;
 
     printf("Creating the user...\n");
 
@@ -81,10 +140,6 @@ _Bool create_user(REGISTRATION_SYSTEM *rs) {
     scanf("%s",tmp_username);
     strcpy(tmp_user.username_, tmp_username);
 
-    printf("Enter an email: \n");
-    scanf("%s",tmp_email);
-    strcpy(tmp_user.user_email_, tmp_email);
-
     printf("Enter the password: \n");
     scanf("%s",tmp_password);
     strcpy(tmp_user.password_, tmp_password);
@@ -93,11 +148,56 @@ _Bool create_user(REGISTRATION_SYSTEM *rs) {
     scanf("%d",&tmp_id);
     tmp_user.id_ = tmp_id;
 
+    printf("Set default credit for the user: \n");
+    scanf("%lf",&tmp_credit);
+    tmp_user.id_ = tmp_credit;
+
     if(add_user(rs,&tmp_user)){
         return true;
     }
     return false;
 }
+
+_Bool registrate_component(REGISTRATION_SYSTEM *rs) {
+    COMPONENT tmp_component;
+    char tmp_manufacturer[CHARACTERS];
+    char tmp_type[CHARACTERS];
+    char tmp_model[CHARACTERS];
+    int tmp_year;
+    double tmp_price;
+
+    printf("Registration of the component...\n");
+
+    printf("Enter a manufacturer:\n");
+    scanf("%s",tmp_manufacturer);
+    strcpy(tmp_component.manufacturer, tmp_manufacturer);
+
+    printf("Enter a type of component: \n");
+    scanf("%s",tmp_type);
+    strcpy(tmp_component.type, tmp_type);
+
+    printf("Enter a model: \n");
+    scanf("%s",tmp_model);
+    strcpy(tmp_component.model, tmp_model);
+
+    printf("Enter the year of production: \n");
+    scanf("%d",&tmp_year);
+    tmp_component.year_of_production = tmp_year;
+
+
+    printf("Set price for the component: \n");
+    scanf("%lf",&tmp_price);
+    tmp_component.price = tmp_price;
+
+    if(add_component(rs,&tmp_component)){
+        return true;
+    }
+    return false;
+}
+
+
+
+
 
 USER * find_user(REGISTRATION_SYSTEM *rs) {
     char tmp_first_name[USER_NAME_LENGTH];
@@ -125,6 +225,39 @@ USER * find_user(REGISTRATION_SYSTEM *rs) {
     printf("This user is not in the system! \n");
     return NULL;
 }
+
+COMPONENT * find_component(REGISTRATION_SYSTEM  *rs) {
+    char tmp_manufacturer[CHARACTERS];
+    char tmp_type[CHARACTERS];
+    char tmp_model[CHARACTERS];
+    int tmp_year;
+
+    printf("Finding the component...\n");
+
+    printf("Manufacturer:\n");
+    scanf("%s",tmp_manufacturer);
+
+    printf("Type of hardware: \n");
+    scanf("%s",tmp_type);
+
+    printf("Model: \n");
+    scanf("%s",tmp_model);
+
+    printf("Year of production: \n");
+    scanf("%d",&tmp_year);
+
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if(strcmp(rs->components_[i].manufacturer, tmp_manufacturer) == 0 && rs->components_[i].year_of_production == tmp_year &&
+           strcmp(rs->components_[i].type, tmp_type) == 0 &&
+           strcmp(rs->components_[i].model, tmp_model) == 0) {
+            return &rs->users_[i];
+
+        }
+    }
+    printf("This component is not in the system! \n");
+    return NULL;
+}
+
 
 _Bool delete_user(REGISTRATION_SYSTEM *rs) {
     USER *tmp_user = find_user(rs);
