@@ -5,6 +5,8 @@
 #ifndef SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
 #define SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
 #include "../header_file/user.h"
+#include "socket_definitions.h"
+
 #define CAPACITY 30
 #define BUFFER 150
 typedef struct registration_system {
@@ -14,6 +16,7 @@ typedef struct registration_system {
 } REGISTRATION_SYSTEM;
 
 //void registration_system_init(REGISTRATION_SYSTEM *rs);
+void * registration_system_start(void * data);
 USER* add_user(REGISTRATION_SYSTEM *rs, USER *us); //adding existing user
 USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us); // removing existing user (only from reg.system)
 void print_users(const REGISTRATION_SYSTEM *rs); // prints users in the registration system

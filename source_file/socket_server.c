@@ -2,7 +2,6 @@
 // Created by Filip on 29. 12. 2022.
 //
 #include "../header_file/socket_definitions.h"
-#include "../header_file/socket.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,12 +10,12 @@
 #include <unistd.h>
 #include <pthread.h>
 
-int create_connection(SOCKET * soket, int sietoveNastavenia) {
+int create_connection(SOCKET * soket, int network_port) {
 
     bzero((char*)&soket->serv_addr, sizeof(soket->serv_addr));
     soket->serv_addr.sin_family = AF_INET;
     soket->serv_addr.sin_addr.s_addr = INADDR_ANY;
-    soket->serv_addr.sin_port = htons(sietoveNastavenia);
+    soket->serv_addr.sin_port = htons(network_port);
 
     soket->sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (soket->sockfd < 0)
@@ -33,18 +32,25 @@ int create_connection(SOCKET * soket, int sietoveNastavenia) {
 
     listen(soket->sockfd, 5);
     soket->cli_len = sizeof(soket->cli_addr);
-    printf("Cakam na pripojenie klienta na porte: %d \n", sietoveNastavenia);
-    while (1) {
+    printf("Socket opened on port: %d \n", network_port);
+    return 0;
+}
+
+void server_handle_new_users(SOCKET * soket, pthread_t *thread) {
+    int number_of_users = 0;
+    while (number_of_users <= sizeof(thread)) {
         soket->newsockfd = accept(soket->sockfd, (struct sockaddr*)&soket->cli_addr, &soket->cli_len);
         if (soket->newsockfd < 0)
         {
             perror("ERROR on accept");
-            return 3;
+            exit(1);
         }
-
-
+        DATA data;
+        data.socket = soket->newsockfd;
+        pthread_create(&thread[number_of_users], NULL, registration_system_start, (void *)&data);
+        printf("User succesfully connected: %d \n", data.socket);
+        ++number_of_users;
     }
-    return 0;
 }
 
 void server_socket_start() {

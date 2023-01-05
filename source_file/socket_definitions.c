@@ -31,7 +31,7 @@ int data_isStopped(DATA *data) {
     return stop;
 }
 
-void *data_readData(void *data) {
+void * data_readData(void *data) {
     DATA *pdata = (DATA *)data;
     char buffer[BUFFER_LENGTH + 1];
     buffer[BUFFER_LENGTH] = '\0';
