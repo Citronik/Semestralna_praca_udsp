@@ -3,16 +3,7 @@
 //
 #include "../header_file/socket_definitions.h"
 
-#include <stdlib.h>
-#include <string.h>
-
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <pthread.h>
-
-int main(int argc, char *argv[]) {
+int clieant_socket_started(int argc, char *argv[]) {
     if (argc < 4) {
         printError("Klienta je nutne spustit s nasledujucimi argumentmi: adresa port pouzivatel.");
     }

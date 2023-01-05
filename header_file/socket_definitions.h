@@ -6,6 +6,15 @@
 #define SEMESTRALNA_PRACA_UDSP_SOCKET_DEFINITIONS_H
 
 #include <pthread.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -28,6 +37,8 @@ void data_stop(DATA *data);
 int data_isStopped(DATA *data);
 void *data_readData(void *data);
 void *data_writeData(void *data);
+
+
 
 void printError(char *str);
 

@@ -11,15 +11,13 @@
 #include <unistd.h>
 #include <pthread.h>
 
-int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        printError("Sever je nutne spustit s nasledujucimi argumentmi: port pouzivatel.");
-    }
-    int port = atoi(argv[1]);
+void server_socket_start() {
+
+    int port = 10111;
     if (port <= 0) {
         printError("Port musi byt cele cislo vacsie ako 0.");
     }
-    char *userName = argv[2];
+    char *userName = "SERVER";
 
     //vytvorenie TCP socketu <sys/socket.h>
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -70,5 +68,4 @@ int main(int argc, char* argv[]) {
     //uzavretie socketu klienta <unistd.h>
     close(clientSocket);
 
-    return (EXIT_SUCCESS);
 }

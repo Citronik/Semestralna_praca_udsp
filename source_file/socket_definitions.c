@@ -3,14 +3,6 @@
 //
 #include "../header_file/socket_definitions.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
-#include <unistd.h>
-#include <fcntl.h>
-
 char *endMsg = ":end";
 
 void data_init(DATA *data, const char* userName, const int socket) {

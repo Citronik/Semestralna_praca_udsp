@@ -13,6 +13,7 @@ typedef struct registration_system {
     //double earnings;
 } REGISTRATION_SYSTEM;
 
+//void registration_system_init(REGISTRATION_SYSTEM *rs);
 USER* add_user(REGISTRATION_SYSTEM *rs, USER *us); //adding existing user
 USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us); // removing existing user (only from reg.system)
 void print_users(const REGISTRATION_SYSTEM *rs); // prints users in the registration system
