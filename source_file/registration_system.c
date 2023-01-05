@@ -126,7 +126,6 @@ USER * find_user(REGISTRATION_SYSTEM *rs) {
     return NULL;
 }
 
-
 _Bool delete_user(REGISTRATION_SYSTEM *rs) {
     USER *tmp_user = find_user(rs);
     if(tmp_user == NULL){
@@ -137,9 +136,11 @@ _Bool delete_user(REGISTRATION_SYSTEM *rs) {
     return true;
 }
 
-
-
 void reg_sys_to_string(REGISTRATION_SYSTEM *rs){
     printf("Registration system has %d users and the capacity is %d\n"
            "",rs->number_of_users_,CAPACITY);
+}
+
+void * registration_system_start(void * data) {
+
 }

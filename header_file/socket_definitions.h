@@ -17,12 +17,16 @@
 #include <unistd.h>
 #include "socket.h"
 
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 #define USER_LENGTH 10
 #define BUFFER_LENGTH 300
+#include "registration_system.h"
+
+
 extern char *endMsg;
 
 typedef struct data {
@@ -39,6 +43,7 @@ int data_isStopped(DATA *data);
 void *data_readData(void *data);
 void *data_writeData(void *data);
 int create_connection(SOCKET * soket, int sietoveNastavenia);
+void server_handle_new_users(SOCKET * soket, pthread_t *thread);
 
 
 void printError(char *str);
