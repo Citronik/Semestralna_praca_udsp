@@ -1,3 +1,4 @@
+/*
 //
 // Created by Filip on 29. 12. 2022.
 //
@@ -56,3 +57,4 @@ int clieant_socket_started(int argc, char *argv[]) {
 
     return (EXIT_SUCCESS);
 }
+*/

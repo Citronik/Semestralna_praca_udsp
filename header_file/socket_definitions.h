@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
+#include "socket.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -37,7 +38,7 @@ void data_stop(DATA *data);
 int data_isStopped(DATA *data);
 void *data_readData(void *data);
 void *data_writeData(void *data);
-
+int create_connection(SOCKET * soket, int sietoveNastavenia);
 
 
 void printError(char *str);

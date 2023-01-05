@@ -4,7 +4,8 @@
 
 int main() {
     REGISTRATION_SYSTEM reg;
-    void server_socket_start();
+    SOCKET soket;
+    create_connection(&soket, 11111);
 
 
     return 0;

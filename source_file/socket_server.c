@@ -2,7 +2,7 @@
 // Created by Filip on 29. 12. 2022.
 //
 #include "../header_file/socket_definitions.h"
-
+#include "../header_file/socket.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,61 +11,107 @@
 #include <unistd.h>
 #include <pthread.h>
 
+int create_connection(SOCKET * soket, int sietoveNastavenia) {
+
+    bzero((char*)&soket->serv_addr, sizeof(soket->serv_addr));
+    soket->serv_addr.sin_family = AF_INET;
+    soket->serv_addr.sin_addr.s_addr = INADDR_ANY;
+    soket->serv_addr.sin_port = htons(sietoveNastavenia);
+
+    soket->sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (soket->sockfd < 0)
+    {
+        perror("Error creating socket");
+        return 1;
+    }
+
+    if (bind(soket->sockfd, (struct sockaddr*)&soket->serv_addr, sizeof(soket->serv_addr)) < 0)
+    {
+        perror("Error binding socket address");
+        return 2;
+    }
+
+    listen(soket->sockfd, 5);
+    soket->cli_len = sizeof(soket->cli_addr);
+    printf("Cakam na pripojenie klienta na porte: %d \n", sietoveNastavenia);
+    while (1) {
+        soket->newsockfd = accept(soket->sockfd, (struct sockaddr*)&soket->cli_addr, &soket->cli_len);
+        if (soket->newsockfd < 0)
+        {
+            perror("ERROR on accept");
+            return 3;
+        }
+
+
+    }
+    return 0;
+}
+
 void server_socket_start() {
+    int port = 11111;
 
-    int port = 10111;
-    if (port <= 0) {
-        printError("Port musi byt cele cislo vacsie ako 0.");
+    int sockfd, ret;
+    struct sockaddr_in serverAddr;
+
+    int newSocket;
+    struct sockaddr_in newAddr;
+
+    socklen_t addr_size;
+
+    char buffer[1024];
+    pid_t childpid;
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0){
+        printf("[-]Error in connection.\n");
+        exit(1);
     }
-    char *userName = "SERVER";
+    printf("[+]Server Socket is created.\n");
 
-    //vytvorenie TCP socketu <sys/socket.h>
-    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket < 0) {
-        printError("Chyba - socket.");
+    memset(&serverAddr, '\0', sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+
+    ret = bind(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    if(ret < 0){
+        printf("[-]Error in binding.\n");
+        exit(1);
+    }
+    printf("[+]Bind to port %d\n", 4444);
+
+    if(listen(sockfd, 10) == 0){
+        printf("[+]Listening....\n");
+    }else{
+        printf("[-]Error in binding.\n");
     }
 
-    //definovanie adresy servera <arpa/inet.h>
-    struct sockaddr_in serverAddress;
-    serverAddress.sin_family = AF_INET;         //internetove sockety
-    serverAddress.sin_addr.s_addr = INADDR_ANY; //prijimame spojenia z celeho internetu
-    serverAddress.sin_port = htons(port);       //nastavenie portu
 
-    //prepojenie adresy servera so socketom <sys/socket.h>
-    if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
-        printError("Chyba - bind.");
+    while(1){
+        newSocket = accept(sockfd, (struct sockaddr*)&newAddr, &addr_size);
+        if(newSocket < 0){
+            exit(1);
+        }
+        printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+
+        if((childpid = fork()) == 0){
+            close(sockfd);
+
+            while(1){
+                recv(newSocket, buffer, 1024, 0);
+                if(strcmp(buffer, ":exit") == 0){
+                    printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+                    break;
+                }else{
+                    printf("Client: %s\n", buffer);
+                    send(newSocket, buffer, strlen(buffer), 0);
+                    bzero(buffer, sizeof(buffer));
+                }
+            }
+        }
+
     }
 
-    //server bude prijimat nove spojenia cez socket serverSocket <sys/socket.h>
-    listen(serverSocket, 10);
-
-    //server caka na pripojenie klienta <sys/socket.h>
-    struct sockaddr_in clientAddress;
-    socklen_t clientAddressLength = sizeof(clientAddress);
-    int clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientAddressLength);
-
-    //uzavretie pasivneho socketu <unistd.h>
-    close(serverSocket);
-    if (clientSocket < 0) {
-        printError("Chyba - accept.");
-    }
-
-    //inicializacia dat zdielanych medzi vlaknami
-    DATA data;
-    data_init(&data, userName, clientSocket);
-
-    //vytvorenie vlakna pre zapisovanie dat do socketu <pthread.h>
-    pthread_t thread;
-    pthread_create(&thread, NULL, data_writeData, (void *)&data);
-
-    //v hlavnom vlakne sa bude vykonavat citanie dat zo socketu
-    data_readData((void *)&data);
-
-    //pockame na skoncenie zapisovacieho vlakna <pthread.h>
-    pthread_join(thread, NULL);
-    data_destroy(&data);
-
-    //uzavretie socketu klienta <unistd.h>
-    close(clientSocket);
+    close(newSocket);
 
 }
