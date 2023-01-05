@@ -16,6 +16,6 @@ typedef struct socket{
     struct sockaddr_in serv_addr, cli_addr;
     int n;
     //STORAGE * storage;
-}SOCKET;
+} SOCKET;
 
 #endif //SEMESTRALNA_PRACA_UDSP_SOCKET_H

@@ -8,6 +8,7 @@ char *endMsg = ":end";
 void data_init(DATA *data, const char* userName, const int socket) {
     data->socket = socket;
     data->stop = 0;
+    data->state = 0;
     data->userName[USER_LENGTH] = '\0';
     strncpy(data->userName, userName, USER_LENGTH);
     pthread_mutex_init(&data->mutex, NULL);
@@ -31,68 +32,25 @@ int data_isStopped(DATA *data) {
     return stop;
 }
 
-void * data_readData(void *data) {
-    DATA *pdata = (DATA *)data;
-    char buffer[BUFFER_LENGTH + 1];
-    buffer[BUFFER_LENGTH] = '\0';
-    while(!data_isStopped(pdata)) {
-        bzero(buffer, BUFFER_LENGTH);
-        if (read(pdata->socket, buffer, BUFFER_LENGTH) > 0) {
-            char *posSemi = strchr(buffer, ':');
-            char *pos = strstr(posSemi + 1, endMsg);
-            if (pos != NULL && pos - posSemi == 2 && *(pos + strlen(endMsg)) == '\0') {
-                *(pos - 2) = '\0';
-                printf("Pouzivatel %s ukoncil komunikaciu.\n", buffer);
-                data_stop(pdata);
-            }
-            else {
-                printf("%s\n", buffer);
-            }
-        }
-        else {
-            data_stop(pdata);
-        }
-    }
+int send_message(DATA * data, TOKEN * token) {
+    data->state = write(data->socket, token, sizeof (TOKEN));
+    printf("Posielam spravu! n = [%d]\n",data->state);
 
-    return NULL;
+    if (data->state < 0) {
+        perror("Error writing to socket");
+        return 5;
+    }
+    return 0;
 }
 
-void *data_writeData(void *data) {
-    DATA *pdata = (DATA *)data;
-    char buffer[BUFFER_LENGTH + 1];
-    buffer[BUFFER_LENGTH] = '\0';
-    int userNameLength = strlen(pdata->userName);
-
-    //pre pripad, ze chceme poslat viac dat, ako je kapacita buffra
-    fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL, 0) | O_NONBLOCK);
-    fd_set inputs;
-    FD_ZERO(&inputs);
-    struct timeval tv;
-    tv.tv_usec = 0;
-    while(!data_isStopped(pdata)) {
-        tv.tv_sec = 1;
-        FD_SET(STDIN_FILENO, &inputs);
-        select(STDIN_FILENO + 1, &inputs, NULL, NULL, &tv);
-        if (FD_ISSET(STDIN_FILENO, &inputs)) {
-            sprintf(buffer, "%s: ", pdata->userName);
-            char *textStart = buffer + (userNameLength + 2);
-            while (fgets(textStart, BUFFER_LENGTH - (userNameLength + 2), stdin) > 0) {
-                char *pos = strchr(textStart, '\n');
-                if (pos != NULL) {
-                    *pos = '\0';
-                }
-                write(pdata->socket, buffer, strlen(buffer) + 1);
-
-                if (strstr(textStart, endMsg) == textStart && strlen(textStart) == strlen(endMsg)) {
-                    printf("Koniec komunikacie.\n");
-                    data_stop(pdata);
-                }
-            }
-        }
+int read_message(DATA * data, TOKEN * token) {
+    data->state = read(data->socket, token, sizeof (TOKEN));
+    printf("Prijal som spravu! n = [%d]\n",data->state);
+    if (data->state < 0) {
+        perror("Error reading from socket");
+        return 6;
     }
-    fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL, 0) & ~O_NONBLOCK);
-
-    return NULL;
+    return 0;
 }
 
 void printError(char *str) {

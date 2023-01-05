@@ -24,7 +24,9 @@ extern "C" {
 
 #define USER_LENGTH 10
 #define BUFFER_LENGTH 300
+#define MAX_POCET_POUZIVATELOV 20
 #include "registration_system.h"
+#include "token.h"
 
 
 extern char *endMsg;
@@ -33,6 +35,7 @@ typedef struct data {
     char userName[USER_LENGTH + 1];
     pthread_mutex_t mutex;
     int socket;
+    int state;
     int stop;
 } DATA;
 
@@ -43,7 +46,9 @@ int data_isStopped(DATA *data);
 void *data_readData(void *data);
 void *data_writeData(void *data);
 int create_connection(SOCKET * soket, int sietoveNastavenia);
-void server_handle_new_users(SOCKET * soket, pthread_t *thread);
+void server_handle_new_users(SOCKET * soket);
+int send_message(DATA * data, TOKEN * token);
+int read_message(DATA * data, TOKEN * token);
 
 
 void printError(char *str);

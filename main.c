@@ -8,7 +8,7 @@ int main() {
     SOCKET soket;
     create_connection(&soket, 11111);
     pthread_t threads[MAX_POCET_POUZIVATELOV];
-    server_handle_new_users(&soket, threads);
+    server_handle_new_users(&soket);
 
 #undef MAX_POCET_POUZIVATELOV
     return 0;

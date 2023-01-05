@@ -142,5 +142,10 @@ void reg_sys_to_string(REGISTRATION_SYSTEM *rs){
 }
 
 void * registration_system_start(void * data) {
-
+    DATA * datas = (DATA *)data;
+    TOKEN * token = calloc(1,sizeof (TOKEN));
+    token_init(token);
+    send_message(datas, token);
+    read_message(datas,token);
+    printf("%s\n", token->content_);
 }
