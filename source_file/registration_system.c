@@ -274,7 +274,7 @@ void buy_item_for_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
         }
     }
     add_component_to_user(&rs->users_[index], cp);
-    rs->sales += cp->price;
+    rs->sales += cp->price_;
 }
 
 
@@ -306,8 +306,7 @@ void * registration_system_start(void * data) {
     DATA * datas = (DATA *)data;
     TOKEN * token = calloc(1,sizeof (TOKEN));
     token_init(token);
-    strncpy(token->content_, "Dear user please autorize first!", sizeof("Dear user please autorize first!"));
+    system_set_message(token, token->response_status_);
     send_message(datas, token);
-    read_message(datas,token);
-    printf("%s\n", token->content_);
+    read_message(datas, token);
 }

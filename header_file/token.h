@@ -11,12 +11,15 @@
 
 typedef struct token{
     char content_[CONTENT_LENGTH];
+    char response_[CONTENT_LENGTH];
     //char user_id_[USER_ID_LENGTH];
     int user_id_;
     int service_type_;
+    int response_status_;
 } TOKEN;
 
 void token_init(TOKEN * token);
+_Bool token_compare(TOKEN * token1, TOKEN * token2);
 
 
 #undef VELKOST_SPRAVY

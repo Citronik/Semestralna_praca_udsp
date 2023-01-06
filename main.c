@@ -23,6 +23,8 @@ int main() {
     pthread_join(thread_user1, NULL);
     pthread_join(thread_user2, NULL);
 
+
+
     /*USER * user = malloc(sizeof(USER));
     user_init(user);
     user_set_first_name(user, "Jozko");

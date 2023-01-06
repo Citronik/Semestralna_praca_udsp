@@ -12,5 +12,6 @@ void * client_start_app() {
     DATA data;
     data.socket = soket.newsockfd;
     read_message(&data, token);
+    printf("%s\n",token->response_);
 
 }

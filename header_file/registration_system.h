@@ -6,12 +6,14 @@
 #define SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
 #include "../header_file/user.h"
 #include "socket_definitions.h"
+#include "registration_system_responses.h"
 
 #define CAPACITY 30
 #define BUFFER 150
 typedef struct registration_system {
     USER users_[CAPACITY];
     COMPONENT components_[CAPACITY];
+    TOKEN * active_users_[CAPACITY];
     unsigned int number_of_components;
     unsigned int number_of_users_;
     double sales;
