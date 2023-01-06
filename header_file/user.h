@@ -27,13 +27,8 @@ typedef struct user {
     int id_;
 } USER;
 
-void user_init(USER * user);
-void user_set_first_name(USER *us, char * first_name);
-void user_set_last_name(USER *us, char * last_name);
-void user_set_username(USER *us, char * username);
-void user_set_password(USER *us, char * password);
 _Bool compare_users(const USER *us1, const USER *us2);
-char * user_to_string(const USER *us, char *dest);
+char* user_to_string(const USER *us, char *dest);
 void recharge_credit(USER *us, double value);
 _Bool user_to_token(USER* user, TOKEN * token);
 
