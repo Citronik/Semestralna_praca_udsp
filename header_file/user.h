@@ -29,6 +29,8 @@ typedef struct user {
 _Bool compare_users(const USER *us1, const USER *us2);
 char* user_to_string(const USER *us, char *dest);
 void recharge_credit(USER *us, double value);
-
-
+void print_owned_components(const USER *us);
+COMPONENT * add_component_to_user(USER *us, COMPONENT *cp);
+COMPONENT * remove_component_from_user(USER *us, COMPONENT *cp);
+COMPONENT * find_owned_component(USER *us);
 #endif //SEMESTRALNA_PRACA_UDSP_USER_H
