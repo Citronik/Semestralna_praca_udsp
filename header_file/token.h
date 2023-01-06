@@ -5,7 +5,7 @@
 #ifndef SEMESTRALNA_PRACA_UDSP_TOKEN_H
 #define SEMESTRALNA_PRACA_UDSP_TOKEN_H
 
-#define CONTENT_LENGTH 200
+#define CONTENT_LENGTH 500
 //#define USER_ID_LENGTH 50
 #include <string.h>
 

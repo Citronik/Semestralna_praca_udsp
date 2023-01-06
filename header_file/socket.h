@@ -15,7 +15,6 @@ typedef struct socket{
     socklen_t cli_len;
     struct sockaddr_in serv_addr, cli_addr;
     int n;
-    //STORAGE * storage;
 } SOCKET;
 
 #endif //SEMESTRALNA_PRACA_UDSP_SOCKET_H

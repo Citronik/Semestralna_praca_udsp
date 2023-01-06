@@ -20,9 +20,9 @@ typedef struct user {
     char last_name_[USER_NAME_LENGTH];
     char username_[USER_NAME_LENGTH];
     char password_[USER_PASSWORD_LENGTH];
-    COMPONENT owned_components[USER_MAX_COMPONENTS];
-    int number_of_owned_components;
-    double credit;
+    COMPONENT owned_components_[USER_MAX_COMPONENTS];
+    int number_of_owned_components_;
+    double credit_;
     int id_;
 } USER;
 

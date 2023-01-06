@@ -16,8 +16,8 @@ USER* add_user(REGISTRATION_SYSTEM *rs, USER *us) {
     rs->users_[rs->number_of_users_] = * us;
     rs->number_of_users_++;
     printf("User: %s %s , username: %s, password: %s, ID: %d credit: %lf €, has been added to the registration system!\n",
-           us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit);
-    us->number_of_owned_components = 0;
+           us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit_);
+    us->number_of_owned_components_ = 0;
     return &rs->users_[rs->number_of_users_-1];
 
 }
@@ -39,7 +39,6 @@ COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp) {
            cp->manufacturer,cp->type,cp->model,cp->year_of_production,cp->price);
     return &rs->components_[rs->number_of_components-1];
 }
-
 
 COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp){
     if (rs->number_of_components == 0) {
@@ -67,7 +66,6 @@ COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp){
     }
 }
 
-
 USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
     if (rs->number_of_users_ == 0) {
         printf("There are not any users in the system!\n");
@@ -83,7 +81,7 @@ USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
         }
     }
     printf("User: %s %s , username: %s, password: %s, ID: %d credit: %lf €, has been removed from the registration system!\n",
-           us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit);
+           us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit_);
 
     for (int i = 0; i < rs->number_of_users_; i++) {
         if (!compare_users(us, &rs->users_[i])){
@@ -92,7 +90,6 @@ USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
         printf("User is not in the registration system\n");
     }
 }
-
 
 void print_users(const REGISTRATION_SYSTEM *rs) {
     if (rs->number_of_users_ <= 0) {
@@ -115,7 +112,6 @@ void print_components(const REGISTRATION_SYSTEM *rs) {
         printf("%s", tmpStr);
     }
 }
-
 
 _Bool registrate_user(REGISTRATION_SYSTEM *rs) {
     USER tmp_user;
@@ -194,10 +190,6 @@ _Bool registrate_component(REGISTRATION_SYSTEM *rs) {
     }
     return false;
 }
-
-
-
-
 
 USER * find_user(REGISTRATION_SYSTEM *rs) {
     char tmp_first_name[USER_NAME_LENGTH];
