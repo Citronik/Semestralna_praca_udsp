@@ -266,6 +266,42 @@ void reg_sys_to_string(REGISTRATION_SYSTEM *rs){
            "",rs->number_of_users_,CAPACITY);
 }
 
+void buy_item_for_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
+    int index = 0;
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (compare_users(us, &rs->users_[i])) {
+            index = i;
+        }
+    }
+    add_component_to_user(&rs->users_[index], cp);
+    rs->sales += cp->price;
+}
+
+
+void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
+    int index = 0;
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (compare_users(us, &rs->users_[i])) {
+            index = i;
+        }
+    }
+    remove_component_from_user(&rs->users_[index], cp);
+}
+
+void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us){
+    int index = 0;
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (compare_users(us, &rs->users_[i])) {
+            index = i;
+        }
+    }
+    double tmp;
+    printf("Select value of credit which you want to charge to user %s (%s %s)\n", us->username_, us->first_name_,us->last_name_);
+    scanf("%lf", &tmp);
+    recharge_credit(&rs->users_[index], tmp);
+}
+
+
 void * registration_system_start(void * data) {
     DATA * datas = (DATA *)data;
     TOKEN * token = calloc(1,sizeof (TOKEN));

@@ -14,7 +14,7 @@ typedef struct registration_system {
     COMPONENT components_[CAPACITY];
     unsigned int number_of_components;
     unsigned int number_of_users_;
-    double earnings;
+    double sales;
 } REGISTRATION_SYSTEM;
 
 //void registration_system_init(REGISTRATION_SYSTEM *rs);
@@ -31,4 +31,7 @@ void reg_sys_to_string(REGISTRATION_SYSTEM *rs); // prints details about the reg
 COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp); // adding component
 COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp);  // removing component
 _Bool registrate_component(REGISTRATION_SYSTEM *rs);
+void buy_item_for_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp);
+void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp);
+void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us);
 #endif //SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
