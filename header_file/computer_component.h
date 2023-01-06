@@ -12,12 +12,14 @@
 #define CHARACTERS 50
 
 typedef struct component {
-    char manufacturer[CHARACTERS];
-    char type[CHARACTERS];
-    char model[CHARACTERS];
-    double price;
-    int year_of_production;
+    char manufacturer_[CHARACTERS];
+    char type_[CHARACTERS];
+    char model_[CHARACTERS];
+    double price_;
+    int year_of_production_;
 } COMPONENT;
+
+void component_init(COMPONENT * cp);
 _Bool compare_components(const COMPONENT *cp1, const COMPONENT *cp2);
 char* component_to_string(const COMPONENT *cp, char *dest);
 

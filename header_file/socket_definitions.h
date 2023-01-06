@@ -23,7 +23,6 @@ extern "C" {
 #endif
 
 #define USER_LENGTH 10
-#define BUFFER_LENGTH 300
 #define MAX_POCET_POUZIVATELOV 20
 #include "registration_system.h"
 #include "token.h"
@@ -46,10 +45,10 @@ int data_isStopped(DATA *data);
 void *data_readData(void *data);
 void *data_writeData(void *data);
 int create_connection(SOCKET * soket, int sietoveNastavenia);
-void server_handle_new_users(SOCKET * soket);
+void * server_handle_new_users(void * datas);
 int send_message(DATA * data, TOKEN * token);
 int read_message(DATA * data, TOKEN * token);
-
+int client_socket_started(SOCKET * soket, char * hostname, int port);
 
 void printError(char *str);
 

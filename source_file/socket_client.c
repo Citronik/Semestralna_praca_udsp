@@ -1,60 +1,40 @@
-/*
+
 //
 // Created by Filip on 29. 12. 2022.
 //
 #include "../header_file/socket_definitions.h"
 
-int clieant_socket_started(int argc, char *argv[]) {
-    if (argc < 4) {
-        printError("Klienta je nutne spustit s nasledujucimi argumentmi: adresa port pouzivatel.");
-    }
+int client_socket_started(SOCKET * soket, char * hostname, int port) {
 
     //ziskanie adresy a portu servera <netdb.h>
-    struct hostent *server = gethostbyname(argv[1]);
+    struct hostent *server = gethostbyname(hostname);
     if (server == NULL) {
-        printError("Server neexistuje.");
+        printError("[-]Server is unreachable.");
     }
-    int port = atoi(argv[2]);
+
     if (port <= 0) {
-        printError("Port musi byt cele cislo vacsie ako 0.");
+        printError("[-]Port must be an integer and bigger than zero.");
     }
-    char *userName = argv[3];
 
     //vytvorenie socketu <sys/socket.h>
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        printError("Chyba - socket.");
+    soket->sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (soket->sockfd < 0) {
+        printError("[-]Error - socket.");
     }
+
+    bzero((char*)&soket->serv_addr, sizeof(soket->serv_addr));
+    soket->serv_addr.sin_family = AF_INET;
+    soket->serv_addr.sin_addr.s_addr = INADDR_ANY;
+    soket->serv_addr.sin_port = htons(port);
 
     //definovanie adresy servera <arpa/inet.h>
     struct sockaddr_in serverAddress;
     bzero((char *)&serverAddress, sizeof(serverAddress));
-    serverAddress.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, (char *)&serverAddress.sin_addr.s_addr, server->h_length);
-    serverAddress.sin_port = htons(port);
 
-    if (connect(sock,(struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
-        printError("Chyba - connect.");
+    if (connect(soket->sockfd,(struct sockaddr *)&soket->serv_addr, sizeof(soket->serv_addr)) < 0) {
+        printError("[-]Error - connect.");
     }
-
-    //inicializacia dat zdielanych medzi vlaknami
-    DATA data;
-    data_init(&data, userName, sock);
-
-    //vytvorenie vlakna pre zapisovanie dat do socketu <pthread.h>
-    pthread_t thread;
-    pthread_create(&thread, NULL, data_writeData, (void *)&data);
-
-    //v hlavnom vlakne sa bude vykonavat citanie dat zo socketu
-    data_readData((void *)&data);
-
-    //pockame na skoncenie zapisovacieho vlakna <pthread.h>
-    pthread_join(thread, NULL);
-    data_destroy(&data);
-
-    //uzavretie socketu <unistd.h>
-    close(sock);
+    soket->newsockfd = soket->sockfd;
 
     return (EXIT_SUCCESS);
 }
-*/

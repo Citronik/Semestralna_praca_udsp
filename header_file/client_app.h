@@ -7,7 +7,8 @@
 
 #include "socket_definitions.h"
 #include "user.h"
+#include "token.h"
 
-void client_start_app();
+void * client_start_app();
 
 #endif //SEMESTRALNA_PRACA_UDSP_CLIENT_APP_H

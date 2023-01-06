@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "../header_file/computer_component.h"
+#include "token.h"
 
 #define USER_NAME_LENGTH 50
 #define USER_PASSWORD_LENGTH 20
@@ -26,9 +27,15 @@ typedef struct user {
     int id_;
 } USER;
 
+void user_init(USER * user);
+void user_set_first_name(USER *us, char * first_name);
+void user_set_last_name(USER *us, char * last_name);
+void user_set_username(USER *us, char * username);
+void user_set_password(USER *us, char * password);
 _Bool compare_users(const USER *us1, const USER *us2);
-char* user_to_string(const USER *us, char *dest);
+char * user_to_string(const USER *us, char *dest);
 void recharge_credit(USER *us, double value);
+_Bool user_to_token(USER* user, TOKEN * token);
 
 
 #endif //SEMESTRALNA_PRACA_UDSP_USER_H

@@ -36,8 +36,9 @@ int create_connection(SOCKET * soket, int network_port) {
     return 0;
 }
 
-void server_handle_new_users(SOCKET * soket) {
+void * server_handle_new_users(void * datas) {
     int number_of_users = 0;
+    SOCKET * soket = (SOCKET* )datas;
     pthread_t thread[MAX_POCET_POUZIVATELOV];
     while (number_of_users <= MAX_POCET_POUZIVATELOV) {
         soket->newsockfd = accept(soket->sockfd, (struct sockaddr*)&soket->cli_addr, &soket->cli_len);

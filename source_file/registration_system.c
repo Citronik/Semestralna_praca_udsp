@@ -36,7 +36,7 @@ COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp) {
     rs->number_of_users_++;
     printf("Adding the component: \n");
     printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %lf\n",
-           cp->manufacturer,cp->type,cp->model,cp->year_of_production,cp->price);
+           cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
     return &rs->components_[rs->number_of_components-1];
 }
 
@@ -56,7 +56,7 @@ COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp){
     }
     printf("Removing the component: \n");
     printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %lf\n",
-           cp->manufacturer,cp->type,cp->model,cp->year_of_production,cp->price);
+           cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
 
     for (int i = 0; i < rs->number_of_users_; i++) {
         if (!compare_components(cp, &rs->components_[i])){
@@ -166,24 +166,24 @@ _Bool registrate_component(REGISTRATION_SYSTEM *rs) {
 
     printf("Enter a manufacturer:\n");
     scanf("%s",tmp_manufacturer);
-    strcpy(tmp_component.manufacturer, tmp_manufacturer);
+    strcpy(tmp_component.manufacturer_, tmp_manufacturer);
 
     printf("Enter a type of component: \n");
     scanf("%s",tmp_type);
-    strcpy(tmp_component.type, tmp_type);
+    strcpy(tmp_component.type_, tmp_type);
 
     printf("Enter a model: \n");
     scanf("%s",tmp_model);
-    strcpy(tmp_component.model, tmp_model);
+    strcpy(tmp_component.model_, tmp_model);
 
     printf("Enter the year of production: \n");
     scanf("%d",&tmp_year);
-    tmp_component.year_of_production = tmp_year;
+    tmp_component.year_of_production_ = tmp_year;
 
 
     printf("Set price for the component: \n");
     scanf("%lf",&tmp_price);
-    tmp_component.price = tmp_price;
+    tmp_component.price_ = tmp_price;
 
     if(add_component(rs,&tmp_component)){
         return true;
@@ -218,7 +218,7 @@ USER * find_user(REGISTRATION_SYSTEM *rs) {
     return NULL;
 }
 
-COMPONENT * find_component(REGISTRATION_SYSTEM  *rs) {
+COMPONENT * find_component(REGISTRATION_SYSTEM  * rs) {
     char tmp_manufacturer[CHARACTERS];
     char tmp_type[CHARACTERS];
     char tmp_model[CHARACTERS];
@@ -239,10 +239,10 @@ COMPONENT * find_component(REGISTRATION_SYSTEM  *rs) {
     scanf("%d",&tmp_year);
 
     for (int i = 0; i < rs->number_of_users_; i++) {
-        if(strcmp(rs->components_[i].manufacturer, tmp_manufacturer) == 0 && rs->components_[i].year_of_production == tmp_year &&
-           strcmp(rs->components_[i].type, tmp_type) == 0 &&
-           strcmp(rs->components_[i].model, tmp_model) == 0) {
-            return &rs->users_[i];
+        if(strcmp(rs->components_[i].manufacturer_, tmp_manufacturer) == 0 && rs->components_[i].year_of_production_ == tmp_year &&
+           strcmp(rs->components_[i].type_, tmp_type) == 0 &&
+           strcmp(rs->components_[i].model_, tmp_model) == 0) {
+            return &rs->components_[i];
 
         }
     }
@@ -270,6 +270,7 @@ void * registration_system_start(void * data) {
     DATA * datas = (DATA *)data;
     TOKEN * token = calloc(1,sizeof (TOKEN));
     token_init(token);
+    strncpy(token->content_, "Dear user please autorize first!", sizeof("Dear user please autorize first!"));
     send_message(datas, token);
     read_message(datas,token);
     printf("%s\n", token->content_);
