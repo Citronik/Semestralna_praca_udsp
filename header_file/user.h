@@ -31,6 +31,11 @@ _Bool compare_users(const USER *us1, const USER *us2);
 char* user_to_string(const USER *us, char *dest);
 void recharge_credit(USER *us, double value);
 _Bool user_to_token(USER* user, TOKEN * token);
-
-
+void user_set_first_name(USER *us, char * first_name);
+void user_set_last_name(USER *us, char * last_name);
+void user_set_username(USER *us, char * username);
+void user_set_password(USER *us, char * password);
+_Bool user_to_token(USER* user, TOKEN * token);
+COMPONENT * remove_component_from_user(USER *us, COMPONENT *cp);
+COMPONENT * add_component_to_user(USER *us, COMPONENT *cp);
 #endif //SEMESTRALNA_PRACA_UDSP_USER_H
