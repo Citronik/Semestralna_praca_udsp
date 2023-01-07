@@ -308,5 +308,28 @@ void * registration_system_start(void * data) {
     token_init(token);
     system_set_message(token, token->response_status_);
     send_message(datas, token);
-    read_message(datas, token);
+    do {
+        read_message(datas, token);
+        switch (token->service_type_) {
+            case 100:
+                //end user, deathentification
+                break;
+            case 1:
+                //registration create user account and after registration login created user
+                break;
+            case 2:
+                //login user will send username and password system will try to ensure user exist and then login to system
+                break;
+            default:
+                //warning message
+                break;
+
+        }
+
+    } while(token_is_active(token));
+
+
+
+    free(token);
+    token = NULL;
 }

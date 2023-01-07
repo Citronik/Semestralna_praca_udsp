@@ -19,3 +19,7 @@ void token_init(TOKEN * token){
 _Bool token_compare(TOKEN * token1, TOKEN * token2){
     return token1->user_id_ == token2->user_id_;
 }
+
+_Bool token_is_active(TOKEN * token){
+    return token->service_type_ != 0;
+}

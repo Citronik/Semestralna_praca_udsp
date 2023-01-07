@@ -20,6 +20,7 @@ typedef struct token{
 
 void token_init(TOKEN * token);
 _Bool token_compare(TOKEN * token1, TOKEN * token2);
+_Bool token_is_active(TOKEN * token);
 
 
 #undef VELKOST_SPRAVY
