@@ -2,7 +2,6 @@
 // Created by Filip on 6. 1. 2023.
 //
 #include "../header_file/client_app.h"
-#include "../header_file/socket_definitions.h"
 
 void * client_start_app() {
     TOKEN * token = malloc(sizeof(TOKEN));

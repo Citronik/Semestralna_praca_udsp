@@ -1,12 +1,18 @@
 //
 // Created by slavi on 4. 1. 2023.
 //
-
+#pragma once
 #ifndef SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
 #define SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
-#include "../header_file/user.h"
+
+/*#ifdef	__cplusplus
+extern "C" {
+#endif*/
+
+#include "user.h"
+#include "token.h"
 #include "socket_definitions.h"
-#include "registration_system_responses.h"
+#include "../header_file/registration_system_responses.h"
 
 #define CAPACITY 30
 #define BUFFER 150
@@ -16,24 +22,456 @@ typedef struct registration_system {
     TOKEN * active_users_[CAPACITY];
     unsigned int number_of_components;
     unsigned int number_of_users_;
+    unsigned int number_of_active_users_;
     double sales;
 } REGISTRATION_SYSTEM;
+
+
+
+REGISTRATION_SYSTEM * reg_sys_;
+
+pthread_mutex_t mut_component_ = PTHREAD_MUTEX_INITIALIZER
+, mut_user_ = PTHREAD_MUTEX_INITIALIZER
+, mut_token_ = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_cond_t cond_us_occupied_ = PTHREAD_COND_INITIALIZER
+, cond_us_open_ = PTHREAD_COND_INITIALIZER
+, cond_com_occupied_=PTHREAD_COND_INITIALIZER
+, cond_com_open_=PTHREAD_COND_INITIALIZER
+, cond_tok_occupied_=PTHREAD_COND_INITIALIZER
+, cond_tok_open_=PTHREAD_COND_INITIALIZER;
 
 //void registration_system_init(REGISTRATION_SYSTEM *rs);
 void * registration_system_start(void * data);
 USER* add_user(REGISTRATION_SYSTEM *rs, USER *us); //adding existing user
-USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us); // removing existing user (only from reg.system)
-void print_users(const REGISTRATION_SYSTEM *rs); // prints users in the registration system
+USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us); //removing existing user (only from reg.system)
+void print_users(const REGISTRATION_SYSTEM *rs); //prints users in the registration system
 void print_components(const REGISTRATION_SYSTEM *rs);
-_Bool registrate_user(REGISTRATION_SYSTEM *rs); // create new user
+_Bool registrate_user(REGISTRATION_SYSTEM *rs); //create new user
 _Bool delete_user(REGISTRATION_SYSTEM *rs); //complete delete of user
-USER * find_user(REGISTRATION_SYSTEM *rs); // finds the user in the registration system
+USER * find_user(REGISTRATION_SYSTEM *rs); //finds the user in the registration system
 COMPONENT * find_component(REGISTRATION_SYSTEM  *rs);
 void reg_sys_to_string(REGISTRATION_SYSTEM *rs); // prints details about the registration system
-COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp); // adding component
-COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp);  // removing component
+COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp); //adding component
+COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp);  //removing component
 _Bool registrate_component(REGISTRATION_SYSTEM *rs);
 void buy_item_for_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp);
 void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp);
 void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us);
+void registration_system_login(DATA *data, TOKEN *token);
+TOKEN *  registration_system_authentificate(REGISTRATION_SYSTEM *reg, USER *user);
+USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char * username, char * pass);
+void * server_handle_new_users(void * datas);
+
+/*
+#ifdef	__cplusplus
+}
+#endif
+*/
+
+USER* add_user(REGISTRATION_SYSTEM *rs, USER *us) {
+    if (rs->number_of_users_ >= CAPACITY) {
+        printf("Maximum capacity has been reached!\n");
+        return NULL;
+    }
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (compare_users(us, &rs->users_[i])){
+            return &rs->users_[i];
+        }
+    }
+    rs->users_[rs->number_of_users_] = * us;
+    rs->number_of_users_++;
+    printf("User: %s %s , username: %s, password: %s, ID: %d credit: %lf €, has been added to the registration system!\n",
+           us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit_);
+    us->number_of_owned_components_ = 0;
+    return &rs->users_[rs->number_of_users_-1];
+
+}
+
+COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp) {
+    if (rs->number_of_components >= CAPACITY) {
+        printf("Maximum capacity has been reached!\n");
+        return NULL;
+    }
+    for (int i = 0; i < rs->number_of_components; i++) {
+        if (compare_components(cp, &rs->components_[i])){
+            return &rs->components_[i];
+        }
+    }
+    rs->components_[rs->number_of_components] = * cp;
+    rs->number_of_users_++;
+    printf("Adding the component: \n");
+    printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %lf\n",
+           cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
+    return &rs->components_[rs->number_of_components-1];
+}
+
+COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp){
+    if (rs->number_of_components == 0) {
+        printf("There are not any computer components in the system!\n");
+        return false;
+    }
+
+    for(int i = 0; i < rs->number_of_components; i++) {
+        if(compare_components(&rs->components_[i], cp)){
+            *cp = rs->components_[i];
+            rs->components_[i] = rs->components_[rs->number_of_components - 1];
+            rs->components_[rs->number_of_components - 1] = rs->components_[rs->number_of_components + 1];
+            rs->number_of_components--;
+        }
+    }
+    printf("Removing the component: \n");
+    printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %lf\n",
+           cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
+
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (!compare_components(cp, &rs->components_[i])){
+            return &rs->components_[i];
+        }
+        printf("Component is not in the registration system\n");
+    }
+}
+
+USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
+    if (rs->number_of_users_ == 0) {
+        printf("There are not any users in the system!\n");
+        return false;
+    }
+
+    for(int i = 0; i < rs->number_of_users_; i++) {
+        if(compare_users(&rs->users_[i], us)){
+            *us = rs->users_[i];
+            rs->users_[i] = rs->users_[rs->number_of_users_ - 1];
+            rs->users_[rs->number_of_users_ - 1] = rs->users_[rs->number_of_users_ + 1];
+            rs->number_of_users_--;
+        }
+    }
+    printf("User: %s %s , username: %s, password: %s, ID: %d credit: %lf €, has been removed from the registration system!\n",
+           us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit_);
+
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (!compare_users(us, &rs->users_[i])){
+            return &rs->users_[i];
+        }
+        printf("User is not in the registration system\n");
+    }
+}
+
+void print_users(const REGISTRATION_SYSTEM *rs) {
+    if (rs->number_of_users_ <= 0) {
+        printf("There are not any users in the system!\n");
+    }
+    char tmpStr[BUFFER];
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        user_to_string(&rs->users_[i], tmpStr);
+        printf("%s", tmpStr);
+    }
+}
+
+void print_components(const REGISTRATION_SYSTEM *rs) {
+    if (rs->number_of_components <= 0) {
+        printf("There are not any users in the system!\n");
+    }
+    char tmpStr[BUFFER];
+    for (int i = 0; i < rs->number_of_components; i++) {
+        component_to_string(&rs->components_[i], tmpStr);
+        printf("%s", tmpStr);
+    }
+}
+
+_Bool registrate_user(REGISTRATION_SYSTEM *rs) {
+    USER tmp_user;
+    char tmp_first_name[USER_NAME_LENGTH];
+    char tmp_last_name[USER_NAME_LENGTH];
+    char tmp_username[USER_NAME_LENGTH];
+    char tmp_password[USER_PASSWORD_LENGTH];
+    int tmp_id;
+    double tmp_credit;
+
+    printf("Creating the user...\n");
+
+    printf("Enter a first name:\n");
+    scanf("%s",tmp_first_name);
+    strcpy(tmp_user.first_name_, tmp_first_name);
+
+    printf("Enter a last name: \n");
+    scanf("%s",tmp_last_name);
+    strcpy(tmp_user.last_name_, tmp_last_name);
+
+    printf("Enter a username: \n");
+    scanf("%s",tmp_username);
+    strcpy(tmp_user.username_, tmp_username);
+
+    printf("Enter the password: \n");
+    scanf("%s",tmp_password);
+    strcpy(tmp_user.password_, tmp_password);
+
+    printf("Enter the ID of user: \n");
+    scanf("%d",&tmp_id);
+    tmp_user.id_ = tmp_id;
+
+    printf("Set default credit for the user: \n");
+    scanf("%lf",&tmp_credit);
+    tmp_user.id_ = tmp_credit;
+
+    if(add_user(rs,&tmp_user)){
+        return true;
+    }
+    return false;
+}
+
+_Bool registrate_component(REGISTRATION_SYSTEM *rs) {
+    COMPONENT tmp_component;
+    char tmp_manufacturer[CHARACTERS];
+    char tmp_type[CHARACTERS];
+    char tmp_model[CHARACTERS];
+    int tmp_year;
+    double tmp_price;
+
+    printf("Registration of the component...\n");
+
+    printf("Enter a manufacturer:\n");
+    scanf("%s",tmp_manufacturer);
+    strcpy(tmp_component.manufacturer_, tmp_manufacturer);
+
+    printf("Enter a type of component: \n");
+    scanf("%s",tmp_type);
+    strcpy(tmp_component.type_, tmp_type);
+
+    printf("Enter a model: \n");
+    scanf("%s",tmp_model);
+    strcpy(tmp_component.model_, tmp_model);
+
+    printf("Enter the year of production: \n");
+    scanf("%d",&tmp_year);
+    tmp_component.year_of_production_ = tmp_year;
+
+
+    printf("Set price for the component: \n");
+    scanf("%lf",&tmp_price);
+    tmp_component.price_ = tmp_price;
+
+    if(add_component(rs,&tmp_component)){
+        return true;
+    }
+    return false;
+}
+
+USER * find_user(REGISTRATION_SYSTEM *rs) {
+    char tmp_first_name[USER_NAME_LENGTH];
+    char tmp_last_name[USER_NAME_LENGTH];
+    int tmp_id;
+
+    printf("Finding the user...\n");
+
+    printf("First name:\n");
+    scanf("%s",tmp_first_name);
+
+    printf("Last name: \n");
+    scanf("%s",tmp_last_name);
+
+    printf("ID of user: \n");
+    scanf("%d",&tmp_id);
+
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if(strcmp(rs->users_[i].first_name_, tmp_first_name) == 0 && rs->users_[i].id_ == tmp_id &&
+           strcmp(rs->users_[i].last_name_, tmp_last_name) == 0 ) {
+            return &rs->users_[i];
+
+        }
+    }
+    printf("This user is not in the system! \n");
+    return NULL;
+}
+
+COMPONENT * find_component(REGISTRATION_SYSTEM  * rs) {
+    char tmp_manufacturer[CHARACTERS];
+    char tmp_type[CHARACTERS];
+    char tmp_model[CHARACTERS];
+    int tmp_year;
+
+    printf("Finding the component...\n");
+
+    printf("Manufacturer:\n");
+    scanf("%s",tmp_manufacturer);
+
+    printf("Type of hardware: \n");
+    scanf("%s",tmp_type);
+
+    printf("Model: \n");
+    scanf("%s",tmp_model);
+
+    printf("Year of production: \n");
+    scanf("%d",&tmp_year);
+
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if(strcmp(rs->components_[i].manufacturer_, tmp_manufacturer) == 0 && rs->components_[i].year_of_production_ == tmp_year &&
+           strcmp(rs->components_[i].type_, tmp_type) == 0 &&
+           strcmp(rs->components_[i].model_, tmp_model) == 0) {
+            return &rs->components_[i];
+
+        }
+    }
+    printf("This component is not in the system! \n");
+    return NULL;
+}
+
+
+_Bool delete_user(REGISTRATION_SYSTEM *rs) {
+    USER *tmp_user = find_user(rs);
+    if(tmp_user == NULL){
+        printf("Incorrect parameters!\n");
+        return false;
+    }
+    remove_user(rs,tmp_user);
+    return true;
+}
+
+void reg_sys_to_string(REGISTRATION_SYSTEM *rs){
+    printf("Registration system has %d users and the capacity is %d\n"
+           "",rs->number_of_users_,CAPACITY);
+}
+
+void buy_item_for_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
+    int index = 0;
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (compare_users(us, &rs->users_[i])) {
+            index = i;
+        }
+    }
+    add_component_to_user(&rs->users_[index], cp);
+    rs->sales += cp->price_;
+}
+
+
+void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
+    int index = 0;
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (compare_users(us, &rs->users_[i])) {
+            index = i;
+        }
+    }
+    remove_component_from_user(&rs->users_[index], cp);
+}
+
+void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us){
+    int index = 0;
+    for (int i = 0; i < rs->number_of_users_; i++) {
+        if (compare_users(us, &rs->users_[i])) {
+            index = i;
+        }
+    }
+    double tmp;
+    printf("Select value of credit which you want to charge to user %s (%s %s)\n", us->username_, us->first_name_,us->last_name_);
+    scanf("%lf", &tmp);
+    recharge_credit(&rs->users_[index], tmp);
+}
+
+USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char * username, char * pass){
+    if (strlen(username) <= 0 || strlen(pass) <= 0){
+        printf("[-]Wrong data!\n");
+        return NULL;
+    }
+    for (int i = 0; i < reg->number_of_users_; ++i) {
+        if (strcmp(username, reg->users_[i].username_) == 0 & strcmp(pass, reg->users_[i].password_) == 0){
+            printf("[+]User found\n");
+            return &reg->users_[i];
+        }
+    }
+    printf("[-]Cannot find the User\n");
+    return NULL;
+}
+
+TOKEN * registration_system_authentificate(REGISTRATION_SYSTEM * reg, USER * user) {
+    USER * user_found = registration_system_find_by_username_pass(reg, user->username_, user->password_);
+    if (user_found == NULL){
+        return NULL;
+    }
+    TOKEN * active_user_token = NULL;
+    for (int i = 0; i < reg->number_of_active_users_; ++i) {
+        if (user_found->id_ == reg->active_users_[i]->user_id_) {
+            active_user_token = reg->active_users_[i];
+            system_set_message(active_user_token, 2);
+            break;
+        }
+    }
+    if (active_user_token == NULL) {
+        active_user_token = (TOKEN * ) malloc(sizeof(TOKEN));
+        token_init(active_user_token);
+        active_user_token->user_id_ = user_found->id_;
+        system_set_message(active_user_token, 2);
+    }
+    user = user_found;
+    return active_user_token;
+}
+
+void registration_system_login(DATA *data, TOKEN *token) {
+    USER * user = malloc(sizeof(USER));
+    user_init(user);
+    token_login_details(user, token);
+    TOKEN * tmp_token = registration_system_authentificate(reg_sys_, user);
+    if (tmp_token == NULL) {
+        printf("[-]Unable to authorize\n");
+        system_set_message(token, 404);
+        send_message(data, token);
+    }
+
+}
+
+void * registration_system_start(void * data) {
+    DATA * datas = (DATA *)data;
+    TOKEN * token = calloc(1,sizeof (TOKEN));
+    token_init(token);
+    system_set_message(token, token->response_status_);
+    send_message(datas, token);
+    do {
+        read_message(datas, token);
+        switch (token->service_type_) {
+            case 100:
+                //end user, deathentification
+                printf("[+]Logout proceed\n");
+                break;
+            case 1:
+                //registration create user account and after registration login created user
+                printf("[+]Registration proceed\n");
+                break;
+            case 2:
+                //login user will send username and password system will try to ensure user exist and then login to system
+                printf("[+]Login proceed\n");
+                registration_system_login(datas, token);
+                break;
+            default:
+                //warning message
+                printf("[+]Wrong key\n");
+                break;
+
+        }
+
+    } while(token_is_active(token));
+
+
+
+    free(token);
+    token = NULL;
+}
+
+void * server_handle_new_users(void * datas) {
+    int number_of_users = 0;
+    SOCKET * soket = (SOCKET* )datas;
+    pthread_t thread[MAX_POCET_POUZIVATELOV];
+    while (number_of_users <= MAX_POCET_POUZIVATELOV) {
+        soket->newsockfd = accept(soket->sockfd, (struct sockaddr*)&soket->cli_addr, &soket->cli_len);
+        if (soket->newsockfd < 0)
+        {
+            perror("[-]ERROR on accept");
+            exit(1);
+        }
+        DATA data;
+        data.socket = soket->newsockfd;
+        pthread_create(&thread[number_of_users], NULL, registration_system_start, (void *)&data);
+        printf("User succesfully connected: %d \n", data.socket);
+        ++number_of_users;
+    }
+}
+
 #endif //SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H

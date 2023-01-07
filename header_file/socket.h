@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 
 typedef struct socket{
+    //REGISTRATION_SYSTEM * reg;
     int sockfd, newsockfd;
     socklen_t cli_len;
     struct sockaddr_in serv_addr, cli_addr;

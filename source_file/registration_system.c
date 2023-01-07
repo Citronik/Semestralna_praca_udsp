@@ -1,7 +1,9 @@
+/*
 //
 // Created by slavi on 4. 1. 2023.
 //
 #include "../header_file/registration_system.h"
+#include "../header_file/registration_system_responses.h"
 
 USER* add_user(REGISTRATION_SYSTEM *rs, USER *us) {
     if (rs->number_of_users_ >= CAPACITY) {
@@ -301,6 +303,47 @@ void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us){
     recharge_credit(&rs->users_[index], tmp);
 }
 
+USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char * username, char * pass){
+    if (strlen(username) <= 0 || strlen(pass) <= 0){
+        return NULL;
+    }
+    for (int i = 0; i < reg->number_of_users_; ++i) {
+        if (strcmp(username, reg->users_[i].username_) == 0 & strcmp(pass, reg->users_[i].password_) == 0){
+            return &reg->users_[i];
+        }
+    }
+    return NULL;
+}
+
+TOKEN * registration_system_authentificate(REGISTRATION_SYSTEM * reg, USER * user) {
+    USER * user_found = registration_system_find_by_username_pass(reg, user->username_, user->password_);
+    if (user_found == NULL){
+        return NULL;
+    }
+    TOKEN * active_user_token = NULL;
+    for (int i = 0; i < reg->number_of_active_users_; ++i) {
+        if (user_found->id_ == reg->active_users_[i]->user_id_) {
+            active_user_token = reg->active_users_[i];
+            system_set_message(active_user_token, 2);
+            break;
+        }
+    }
+    if (active_user_token == NULL) {
+        active_user_token = (TOKEN * ) malloc(sizeof(TOKEN));
+        token_init(active_user_token);
+        active_user_token->user_id_ = user_found->id_;
+        system_set_message(active_user_token, 2);
+    }
+    return active_user_token;
+}
+
+void registration_system_login(DATA *data, TOKEN *token) {
+    USER * user = malloc(sizeof(USER));
+    user_init(user);
+    token_login_details(user, token);
+    registration_system_authentificate(reg_sys_, user);
+
+}
 
 void * registration_system_start(void * data) {
     DATA * datas = (DATA *)data;
@@ -319,6 +362,7 @@ void * registration_system_start(void * data) {
                 break;
             case 2:
                 //login user will send username and password system will try to ensure user exist and then login to system
+                registration_system_login(datas, token);
                 break;
             default:
                 //warning message
@@ -333,3 +377,22 @@ void * registration_system_start(void * data) {
     free(token);
     token = NULL;
 }
+
+void * server_handle_new_users(void * datas) {
+    int number_of_users = 0;
+    SOCKET * soket = (SOCKET* )datas;
+    pthread_t thread[MAX_POCET_POUZIVATELOV];
+    while (number_of_users <= MAX_POCET_POUZIVATELOV) {
+        soket->newsockfd = accept(soket->sockfd, (struct sockaddr*)&soket->cli_addr, &soket->cli_len);
+        if (soket->newsockfd < 0)
+        {
+            perror("ERROR on accept");
+            exit(1);
+        }
+        DATA data;
+        data.socket = soket->newsockfd;
+        pthread_create(&thread[number_of_users], NULL, registration_system_start, (void *)&data);
+        printf("User succesfully connected: %d \n", data.socket);
+        ++number_of_users;
+    }
+}*/

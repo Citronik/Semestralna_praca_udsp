@@ -16,13 +16,7 @@ void user_init(USER * user) {
 }
 
 _Bool compare_users(const USER *us1, const USER *us2){
-    if (strcmp(us1->first_name_,us2->first_name_) == 0){
-        return true;
-    }
-    if (strcmp(us1->last_name_,us2->last_name_) == 0 && (us1->id_ == us2->id_)){
-        return true;
-    }
-    return false;
+    return strcmp(us1->username_, us2->username_) == 0;
 }
 
 COMPONENT * add_component_to_user(USER *us, COMPONENT *cp) {
@@ -116,17 +110,4 @@ void user_set_password(USER *us, char * password) {
         exit(1);
     }
     strcpy(us->password_, password);
-}
-
-_Bool user_to_token(USER* user, TOKEN * token) {
-    size_t offset = 0;
-    strncpy((token->content_+offset), user->first_name_, USER_NAME_LENGTH);
-    offset += USER_NAME_LENGTH;
-    strncpy((token->content_+offset), user->last_name_, USER_NAME_LENGTH);
-    offset += USER_NAME_LENGTH;
-    strncpy((token->content_+offset), user->username_, USER_NAME_LENGTH);
-    offset += USER_NAME_LENGTH;
-    strncpy((token->content_+offset), user->password_, USER_PASSWORD_LENGTH);
-    offset += USER_PASSWORD_LENGTH;
-    return true;
 }
