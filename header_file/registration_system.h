@@ -26,8 +26,6 @@ typedef struct registration_system {
     double sales;
 } REGISTRATION_SYSTEM;
 
-
-
 REGISTRATION_SYSTEM * reg_sys_;
 
 pthread_mutex_t mut_component_ = PTHREAD_MUTEX_INITIALIZER
@@ -62,6 +60,7 @@ void registration_system_login(DATA *data, TOKEN *token);
 TOKEN *  registration_system_authentificate(REGISTRATION_SYSTEM *reg, USER *user);
 USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char * username, char * pass);
 void * server_handle_new_users(void * datas);
+void registration_system_registration(DATA *data, TOKEN *token);
 
 /*
 #ifdef	__cplusplus
@@ -374,7 +373,7 @@ USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char 
     }
     for (int i = 0; i < reg->number_of_users_; ++i) {
         if (strcmp(username, reg->users_[i].username_) == 0 & strcmp(pass, reg->users_[i].password_) == 0){
-            printf("[+]User found\n");
+            printf("[+]User found %d\n", reg->users_[i].id_);
             return &reg->users_[i];
         }
     }
@@ -401,20 +400,28 @@ TOKEN * registration_system_authentificate(REGISTRATION_SYSTEM * reg, USER * use
         active_user_token->user_id_ = user_found->id_;
         system_set_message(active_user_token, 2);
     }
-    user = user_found;
+    memcpy(user, user_found, sizeof(USER));
+    printf("User to return %d\n", user_found->id_);
+    printf("User to return %d\n", user->id_);
     return active_user_token;
 }
 
 void registration_system_login(DATA *data, TOKEN *token) {
-    USER * user = malloc(sizeof(USER));
+    USER * user = (USER * ) malloc(sizeof(USER));
     user_init(user);
     token_login_details(user, token);
     TOKEN * tmp_token = registration_system_authentificate(reg_sys_, user);
     if (tmp_token == NULL) {
         printf("[-]Unable to authorize\n");
         system_set_message(token, 404);
-        send_message(data, token);
     }
+    memcpy(token, tmp_token, sizeof(TOKEN));
+    send_message(data, token);
+    printf("user id: %d - %s \n", user->id_, user->first_name_);
+    data->state = write(data->socket, user, sizeof (USER));
+}
+
+void registration_system_registration(DATA *data, TOKEN *token){
 
 }
 
@@ -434,6 +441,7 @@ void * registration_system_start(void * data) {
             case 1:
                 //registration create user account and after registration login created user
                 printf("[+]Registration proceed\n");
+                registration_system_registration(datas, token);
                 break;
             case 2:
                 //login user will send username and password system will try to ensure user exist and then login to system
@@ -444,12 +452,8 @@ void * registration_system_start(void * data) {
                 //warning message
                 printf("[+]Wrong key\n");
                 break;
-
         }
-
     } while(token_is_active(token));
-
-
 
     free(token);
     token = NULL;
@@ -469,7 +473,7 @@ void * server_handle_new_users(void * datas) {
         DATA data;
         data.socket = soket->newsockfd;
         pthread_create(&thread[number_of_users], NULL, registration_system_start, (void *)&data);
-        printf("User succesfully connected: %d \n", data.socket);
+        printf("[+]User succesfully connected: %d \n", data.socket);
         ++number_of_users;
     }
 }
