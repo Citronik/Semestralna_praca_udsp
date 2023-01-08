@@ -15,7 +15,7 @@ extern "C" {
 #include "../header_file/registration_system_responses.h"
 
 #define CAPACITY 30
-#define BUFFER 150
+#define BUFFER 150 // we use this for reading from file
 typedef struct registration_system {
     USER users_[CAPACITY];
     COMPONENT components_[CAPACITY];
@@ -58,6 +58,8 @@ _Bool registrate_component(REGISTRATION_SYSTEM *rs);
 void buy_item_for_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp);
 void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp);
 void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us);
+_Bool load_users_from_file(REGISTRATION_SYSTEM *rs, const char *file_name);
+_Bool load_components_from_file(REGISTRATION_SYSTEM *rs, const char *file_name);
 void registration_system_login(DATA *data, TOKEN *token);
 TOKEN *  registration_system_authentificate(REGISTRATION_SYSTEM *reg, USER *user);
 USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char * username, char * pass);
@@ -365,6 +367,76 @@ void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us){
     printf("Select value of credit which you want to charge to user %s (%s %s)\n", us->username_, us->first_name_,us->last_name_);
     scanf("%lf", &tmp);
     recharge_credit(&rs->users_[index], tmp);
+}
+
+
+_Bool load_users_from_file(REGISTRATION_SYSTEM *rs, const char *file_name) {
+    FILE * f = fopen(file_name, "rt");
+    if (f == NULL){
+        perror("The file does not exist!\n");
+        false;
+    }
+
+    char line[BUFFER];
+    while (!feof(f) && rs->number_of_components != CAPACITY){
+        if(fgets(line,BUFFER,f)>0){
+            USER tmp_user = {0};
+            char * p1 = strchr(line, ' ');
+            strncpy(tmp_user.first_name_, line, p1 - line);
+            tmp_user.first_name_[p1-line] = '\0';
+            p1++;
+            char * p2 = strchr(p1, ' ');
+            strncpy(tmp_user.last_name_, p1, p2 - p1);
+            tmp_user.last_name_[p2-p1] = '\0';
+            p2++;
+            char * p3 = strchr(p2, ' ');
+            strncpy(tmp_user.username_, p2, p3 - p2);
+            tmp_user.username_[p3-p2] = '\0';
+            p3++;
+            char * p4 = strchr(p3, ' ');
+            strncpy(tmp_user.password_,p3, p4 - p3);
+            tmp_user.password_[p4-p3] = '\0';
+            tmp_user.id_ = (int)atoi(p4);
+            char * p5 = strchr(p4, ' ');
+            tmp_user.credit_ = atof(p5);
+            add_user(rs, &tmp_user);
+        }
+    }
+    fclose(f);
+    return true;
+}
+
+_Bool load_components_from_file(REGISTRATION_SYSTEM *rs, const char *file_name) {
+    FILE * f = fopen(file_name, "rt");
+    if (f == NULL){
+        perror("The file does not exist!\n");
+        false;
+    }
+
+    char line[BUFFER];
+    while (!feof(f) && rs->number_of_components != CAPACITY){
+        if(fgets(line,BUFFER,f)>0){
+            COMPONENT tmp_component = {0};
+            char * p1 = strchr(line, ' ');
+            strncpy(tmp_component.manufacturer_, line, p1 - line);
+            tmp_component.manufacturer_[p1-line] = '\0';
+            p1++;
+            char * p2 = strchr(p1, ' ');
+            strncpy(tmp_component.type_, p1, p2 - p1);
+            tmp_component.type_[p2-p1] = '\0';
+            p2++;
+            char * p3 = strchr(p2, ' ');
+            strncpy(tmp_component.model_, p2, p3 - p2);
+            tmp_component.model_[p3-p2] = '\0';
+            tmp_component.year_of_production_ = (int)atoi(p3);
+            p3++;
+            char * p4 = strchr(p3, ' ');
+            tmp_component.price_ = atof(p4);
+            add_component(rs, &tmp_component);
+        }
+    }
+    fclose(f);
+    return true;
 }
 
 USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char * username, char * pass){
