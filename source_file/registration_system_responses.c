@@ -38,6 +38,12 @@ void system_set_message(TOKEN * token, int message_type){
             token->service_type_ = SYSTEM_RESPONSE_REG;
             strcpy(token->response_, system_message_reg_succ);
             break;
+        case SYSTEM_RESPONSE_USR_LOGOUT:
+            token->response_status_ = SYSTEM_RESPONSE_SUCCESSFUL;
+            token->service_type_ = SYSTEM_RESPONSE_INIT_STATE;
+            token->user_id_ = SYSTEM_RESPONSE_INIT;
+            strcpy(token->response_, system_message_user_logout);
+            break;
         default:
             token->response_status_ = SYSTEM_RESPONSE_UNAUTH;
             strcpy(token->response_, system_message_unauth);

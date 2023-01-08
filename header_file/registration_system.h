@@ -1,7 +1,6 @@
 //
 // Created by slavi on 4. 1. 2023.
 //
-#pragma once
 #ifndef SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
 #define SEMESTRALNA_PRACA_UDSP_REGISTRATION_SYSTEM_H
 
@@ -64,7 +63,8 @@ USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char 
 void * server_handle_new_users(void * datas);
 void registration_system_registration(DATA *data, TOKEN *token);
 void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
-
+void registration_system_logout_user(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
+void registration_system_deauthorize(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 /*
 #ifdef	__cplusplus
 }
@@ -450,8 +450,6 @@ TOKEN * registration_system_authentificate(REGISTRATION_SYSTEM * reg, USER * use
         system_set_message(active_user_token, 2);
     }
     memcpy(user, user_found, sizeof(USER));
-    printf("User to return %d\n", user_found->id_);
-    printf("User to return %d\n", user->id_);
     return active_user_token;
 }
 
@@ -500,6 +498,41 @@ void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *d
     printf("All components are printed\n");
 }
 
+void registration_system_deauthorize(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
+    TOKEN * tmp_token = NULL;
+    int index = RAND_MAX;
+    for (int i = 0; i < reg->number_of_active_users_; ++i) {
+        if (token_compare(reg->active_users_[i], token)){
+            tmp_token = reg->active_users_[i];
+            index = i;
+        }
+    }
+    if (tmp_token == NULL){
+        system_set_message(token, 404);
+        send_message(data, token);
+        return;
+    }
+    token->user_id_ = 0;
+    if (index < reg->number_of_active_users_) {
+        printf("Editing active users\n");
+        memcpy(tmp_token,tmp_token+sizeof(TOKEN),reg->number_of_active_users_-index* sizeof(TOKEN));
+    }
+    --reg->number_of_active_users_;
+    system_set_message(token, SYSTEM_RESPONSE_USR_LOGOUT);
+    send_message(data, token);
+}
+
+void registration_system_logout_user(REGISTRATION_SYSTEM * reg, DATA * data, TOKEN * token){
+    USER tmp_user;
+    data->state = read(data->socket, &tmp_user, sizeof (USER));
+    registration_system_deauthorize(reg, data, token);
+    USER new_user = {0};
+    printf("Sending new user\n");
+    data->state = write(data->socket, &new_user, sizeof (USER));
+    system_set_message(token, SYSTEM_RESPONSE_USR_LOGOUT);
+    send_message(data, token);
+}
+
 void * registration_system_start(void * data) {
     DATA * datas = (DATA *)data;
     TOKEN * token = calloc(1,sizeof (TOKEN));
@@ -507,6 +540,7 @@ void * registration_system_start(void * data) {
     system_set_message(token, token->response_status_);
     send_message(datas, token);
     do {
+        printf("waiting for client\n");
         read_message(datas, token);
         switch (token->service_type_) {
             case 1:
@@ -541,8 +575,13 @@ void * registration_system_start(void * data) {
                 printf("[+]DISPLAYING YOUR COMPONENTS\n");
                 break;
             case 8:
+                //FIND COMPONENTS
+                printf("[+]SEARCHING FOR COMPONENTS\n");
+                break;
+            case 9:
                 //LOGOUT
                 printf("[+]LOGOUT USER\n");
+                registration_system_logout_user(reg_sys_, datas, token);
                 break;
             case 10:
                 //EXIT

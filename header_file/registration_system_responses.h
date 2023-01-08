@@ -14,6 +14,7 @@
 #define SYSTEM_RESPONSE_REG_UNSUC 4
 #define SYSTEM_RESPONSE_USR_ALREADY_REG 5
 #define SYSTEM_RESPONSE_REG_SUC 6
+#define SYSTEM_RESPONSE_USR_LOGOUT 7
 
 
 #define SYSTEM_RESPONSE_SUCCESSFUL 200
@@ -25,6 +26,7 @@ static char * system_message_auth_suc = "You were succesfully authorized";
 static char * system_message_unauth = "Unauthorized activity";
 static char * system_message_no = "Wrong username and password";
 static char * system_message_reg_succ = "User was succesfuully registered";
+static char * system_message_user_logout = "User was succesfuully legged out";
 static char * system_message_max_capacity_exceed = "Maximum capacity has been reached!";
 
 
