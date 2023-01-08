@@ -39,7 +39,7 @@ pthread_cond_t cond_us_occupied_ = PTHREAD_COND_INITIALIZER
 , cond_tok_occupied_=PTHREAD_COND_INITIALIZER
 , cond_tok_open_=PTHREAD_COND_INITIALIZER;
 
-//void registration_system_init(REGISTRATION_SYSTEM *rs);
+void registration_system_init(REGISTRATION_SYSTEM *rs);
 void * registration_system_start(void * data);
 USER* add_user(REGISTRATION_SYSTEM *rs, USER *us, TOKEN *token); //adding existing user
 USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us); //removing existing user (only from reg.system)
@@ -63,12 +63,26 @@ TOKEN *  registration_system_authentificate(REGISTRATION_SYSTEM *reg, USER *user
 USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char * username, char * pass);
 void * server_handle_new_users(void * datas);
 void registration_system_registration(DATA *data, TOKEN *token);
+void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 
 /*
 #ifdef	__cplusplus
 }
 #endif
 */
+
+void registration_system_init(REGISTRATION_SYSTEM *rs){
+    rs->number_of_users_ = 0;
+    rs->number_of_components = 0;
+    rs->number_of_active_users_ = 0;
+    memset(rs->users_, 0, CAPACITY);
+    memset(rs->components_, 0, CAPACITY);
+    memset(rs->active_users_, 0, CAPACITY);
+    rs->sales = 0;
+    load_users_from_file(rs, "../source_file/users");
+    load_components_from_file(rs, "../source_file/components");
+
+}
 
 USER* add_user(REGISTRATION_SYSTEM *rs, USER *us, TOKEN *token) {
     if (rs->number_of_users_ >= CAPACITY) {
@@ -104,9 +118,9 @@ COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp) {
         }
     }
     rs->components_[rs->number_of_components] = * cp;
-    rs->number_of_users_++;
+    rs->number_of_components++;
     printf("Adding the component: \n");
-    printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %lf\n",
+    printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %.2f\n",
            cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
     return &rs->components_[rs->number_of_components-1];
 }
@@ -175,7 +189,7 @@ void print_users(const REGISTRATION_SYSTEM *rs) {
 
 void print_components(const REGISTRATION_SYSTEM *rs) {
     if (rs->number_of_components <= 0) {
-        printf("There are not any users in the system!\n");
+        printf("There are not any components in the system!\n");
     }
     char tmpStr[BUFFER];
     for (int i = 0; i < rs->number_of_components; i++) {
@@ -361,7 +375,7 @@ _Bool load_users_from_file(REGISTRATION_SYSTEM *rs, const char *file_name) {
             tmp_user.id_ = (int)atoi(p4);
             char * p5 = strchr(p4, ' ');
             tmp_user.credit_ = atof(p5);
-            add_user(rs, &tmp_user);
+            add_user(rs, &tmp_user, NULL);
         }
     }
     fclose(f);
@@ -464,7 +478,26 @@ void registration_system_registration(DATA *data, TOKEN *token){
     USER * tmp_user = add_user(reg_sys_, user, token);
     data->state = write(data->socket, tmp_user, sizeof (USER));
     system_set_message(token, 6);
+    TOKEN * active_token = registration_system_authentificate(reg_sys_, tmp_user);
+    send_message(data, active_token);
+}
+
+void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
+    int index_of_component = 0;
+    printf("Number of components%d\n", reg->number_of_components);
+    pthread_mutex_lock(&mut_component_);
+    while (index_of_component < reg->number_of_components) {
+        token->response_status_ = reg->number_of_components;
+        token->service_type_ = index_of_component;
+        component_to_string(&reg->components_[index_of_component], token->content_);
+        send_message(data, token);
+        ++index_of_component;
+    }
+    pthread_mutex_unlock(&mut_component_);
+    token->service_type_ = index_of_component;
+    strcpy(token->response_, "END");
     send_message(data, token);
+    printf("All components are printed\n");
 }
 
 void * registration_system_start(void * data) {
@@ -476,10 +509,6 @@ void * registration_system_start(void * data) {
     do {
         read_message(datas, token);
         switch (token->service_type_) {
-            case 100:
-                //end user, deathentification
-                printf("[+]Logout proceed\n");
-                break;
             case 1:
                 //registration create user account and after registration login created user
                 printf("[+]Registration proceed\n");
@@ -489,6 +518,35 @@ void * registration_system_start(void * data) {
                 //login user will send username and password system will try to ensure user exist and then login to system
                 printf("[+]Login proceed\n");
                 registration_system_login(datas, token);
+                break;
+            case 3:
+                //DISPLAY COMPONENTS
+                printf("[+]DISPLAYING ALL COMPONENTS\n");
+                registration_system_print_all_components(reg_sys_, datas, token);
+                break;
+            case 4:
+                //SORT COMPONENTS
+                printf("[+]SORTING COMPONENTS\n");
+                break;
+            case 5:
+                //BUY COMPONENT
+                printf("[+]BUYING COMPONENT\n");
+                break;
+            case 6:
+                //RETURN COMPONENT
+                printf("[+]RETURNING COMPONENT\n");
+                break;
+            case 7:
+                //DISPLAY YOUR COMPONENTS
+                printf("[+]DISPLAYING YOUR COMPONENTS\n");
+                break;
+            case 8:
+                //LOGOUT
+                printf("[+]LOGOUT USER\n");
+                break;
+            case 10:
+                //EXIT
+                printf("[+]USER ENDING SESSION\n");
                 break;
             default:
                 //warning message

@@ -5,6 +5,7 @@
 int main() {
     // reg system init
     reg_sys_ = calloc(1, sizeof(REGISTRATION_SYSTEM));
+    registration_system_init(reg_sys_);
     USER * user = malloc(sizeof(USER));
     user_init(user);
     user_set_username(user, "asd");

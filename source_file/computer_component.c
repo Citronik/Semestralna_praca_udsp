@@ -12,17 +12,15 @@ void component_init(COMPONENT * cp) {
 }
 
 _Bool compare_components(const COMPONENT *cp1, const COMPONENT *cp2){
-    if (strcmp(cp1->manufacturer_,cp2->manufacturer_) == 0){
-        return true;
-    }
-    if (strcmp(cp1->type_,cp2->type_) == 0 && (cp1->year_of_production_ == cp2->year_of_production_)){
-        return true;
-    }
-    return false;
+    return strcmp(cp1->manufacturer_,cp2->manufacturer_) == 0 &&
+            strcmp(cp1->type_,cp2->type_) == 0 &&
+            strcmp(cp1->model_,cp2->model_) == 0 &&
+            cp1->price_ == cp2->price_ &&
+            cp1->year_of_production_ == cp2->year_of_production_;
 }
 
 
 char* component_to_string(const COMPONENT *cp, char *dest) {
-    sprintf(dest, "Manufacturer: %s, type: %s, model: %s, year of production: %d, price: %lf€  \n",cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
+    sprintf(dest, "Manufacturer: %s, type: %s, model: %s, year of production: %d, price: %.2f€  \n",cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
     return dest;
 }
