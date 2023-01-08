@@ -41,7 +41,7 @@ pthread_cond_t cond_us_occupied_ = PTHREAD_COND_INITIALIZER
 
 //void registration_system_init(REGISTRATION_SYSTEM *rs);
 void * registration_system_start(void * data);
-USER* add_user(REGISTRATION_SYSTEM *rs, USER *us); //adding existing user
+USER* add_user(REGISTRATION_SYSTEM *rs, USER *us, TOKEN *token); //adding existing user
 USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us); //removing existing user (only from reg.system)
 void print_users(const REGISTRATION_SYSTEM *rs); //prints users in the registration system
 void print_components(const REGISTRATION_SYSTEM *rs);
@@ -70,16 +70,20 @@ void registration_system_registration(DATA *data, TOKEN *token);
 #endif
 */
 
-USER* add_user(REGISTRATION_SYSTEM *rs, USER *us) {
+USER* add_user(REGISTRATION_SYSTEM *rs, USER *us, TOKEN *token) {
     if (rs->number_of_users_ >= CAPACITY) {
+        system_set_message(token, 4);
         printf("Maximum capacity has been reached!\n");
         return NULL;
     }
     for (int i = 0; i < rs->number_of_users_; i++) {
         if (compare_users(us, &rs->users_[i])){
+            system_set_message(token, 5);
+            printf("User already in system!\n");
             return &rs->users_[i];
         }
     }
+    us->id_ = 1000000 + rand() % (10000000-1000000);
     rs->users_[rs->number_of_users_] = * us;
     rs->number_of_users_++;
     printf("User: %s %s , username: %s, password: %s, ID: %d credit: %lf €, has been added to the registration system!\n",
@@ -178,47 +182,6 @@ void print_components(const REGISTRATION_SYSTEM *rs) {
         component_to_string(&rs->components_[i], tmpStr);
         printf("%s", tmpStr);
     }
-}
-
-_Bool registrate_user(REGISTRATION_SYSTEM *rs) {
-    USER tmp_user;
-    char tmp_first_name[USER_NAME_LENGTH];
-    char tmp_last_name[USER_NAME_LENGTH];
-    char tmp_username[USER_NAME_LENGTH];
-    char tmp_password[USER_PASSWORD_LENGTH];
-    int tmp_id;
-    double tmp_credit;
-
-    printf("Creating the user...\n");
-
-    printf("Enter a first name:\n");
-    scanf("%s",tmp_first_name);
-    strcpy(tmp_user.first_name_, tmp_first_name);
-
-    printf("Enter a last name: \n");
-    scanf("%s",tmp_last_name);
-    strcpy(tmp_user.last_name_, tmp_last_name);
-
-    printf("Enter a username: \n");
-    scanf("%s",tmp_username);
-    strcpy(tmp_user.username_, tmp_username);
-
-    printf("Enter the password: \n");
-    scanf("%s",tmp_password);
-    strcpy(tmp_user.password_, tmp_password);
-
-    printf("Enter the ID of user: \n");
-    scanf("%d",&tmp_id);
-    tmp_user.id_ = tmp_id;
-
-    printf("Set default credit for the user: \n");
-    scanf("%lf",&tmp_credit);
-    tmp_user.id_ = tmp_credit;
-
-    if(add_user(rs,&tmp_user)){
-        return true;
-    }
-    return false;
 }
 
 _Bool registrate_component(REGISTRATION_SYSTEM *rs) {
@@ -494,7 +457,14 @@ void registration_system_login(DATA *data, TOKEN *token) {
 }
 
 void registration_system_registration(DATA *data, TOKEN *token){
-
+    printf("%s\n", token->content_);
+    USER * user = malloc(sizeof(USER));
+    user_init(user);
+    data->state = read(data->socket, user, sizeof (USER));
+    USER * tmp_user = add_user(reg_sys_, user, token);
+    data->state = write(data->socket, tmp_user, sizeof (USER));
+    system_set_message(token, 6);
+    send_message(data, token);
 }
 
 void * registration_system_start(void * data) {

@@ -11,9 +11,9 @@ int main() {
     user_set_first_name(user, "asd");
     user_set_last_name(user, "asd");
     user_set_password(user, "asd");
-    user->id_ = 64526;
+    user->id_ = 6452694;
     user->credit_ = 1000;
-    add_user(reg_sys_, user);
+    add_user(reg_sys_, user, NULL);
     SOCKET soket;
     //soket.reg = reg;
     create_connection(&soket, 11112);
@@ -21,11 +21,9 @@ int main() {
     pthread_t thread_new_users;
     pthread_create(&thread_new_users, NULL, server_handle_new_users, (void *)&soket);
 
-
     pthread_join(thread_new_users, NULL);
     //free(reg);
     //reg =NULL;
-
 
 #undef SYSTEM_RESPONSE_AUTH_SUC
 #undef CHARACTERS
