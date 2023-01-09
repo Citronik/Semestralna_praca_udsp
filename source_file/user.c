@@ -9,6 +9,7 @@ void user_init(USER * user) {
     memset(user->password_,0,strlen(user->password_));
     memset(user->username_,0,strlen(user->username_));
     user->credit_ = 0;
+    user->id_ = 0;
     user->number_of_owned_components_ = 0;
     for (int i = 0; i < USER_MAX_COMPONENTS; ++i) {
         component_init(&(user->owned_components_[i]));

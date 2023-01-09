@@ -25,8 +25,8 @@ static char * system_message_initial = "You were succesfully connested to the se
 static char * system_message_auth_suc = "You were succesfully authorized";
 static char * system_message_unauth = "Unauthorized activity";
 static char * system_message_no = "Wrong username and password";
-static char * system_message_reg_succ = "User was succesfuully registered";
-static char * system_message_user_logout = "User was succesfuully legged out";
+static char * system_message_reg_succ = "User was succesfully registered";
+static char * system_message_user_logout = "User was succesfully legged out";
 static char * system_message_max_capacity_exceed = "Maximum capacity has been reached!";
 
 

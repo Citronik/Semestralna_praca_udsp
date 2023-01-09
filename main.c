@@ -8,24 +8,28 @@ int main() {
     registration_system_init(reg_sys_);
     USER * user = malloc(sizeof(USER));
     user_init(user);
-    user_set_username(user, "bsd");
-    user_set_first_name(user, "bsd");
-    user_set_last_name(user, "bsd");
-    user_set_password(user, "bsd");
+    user_set_username(user, "asd");
+    user_set_first_name(user, "asd");
+    user_set_last_name(user, "asd");
+    user_set_password(user, "asd");
     user->id_ = 6452694;
     user->credit_ = 1000;
+    add_component_to_user(user, &reg_sys_->components_[0]);
+    add_component_to_user(user, &reg_sys_->components_[6]);
     add_user(reg_sys_, user, NULL);
     //write_user_to_file(user,"../source_file/users");
     SOCKET soket;
     //soket.reg = reg;
-    create_connection(&soket, 11112);
+    create_connection(&soket, 11111);
     //pthread_t threads[MAX_POCET_POUZIVATELOV];
     pthread_t thread_new_users;
     pthread_create(&thread_new_users, NULL, server_handle_new_users, (void *)&soket);
 
     pthread_join(thread_new_users, NULL);
-    //free(reg);
-    //reg =NULL;
+    free(reg_sys_);
+    reg_sys_ =NULL;
+    free(user);
+    user =NULL;
 
 #undef SYSTEM_RESPONSE_AUTH_SUC
 #undef CHARACTERS

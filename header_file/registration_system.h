@@ -242,26 +242,9 @@ _Bool registrate_component(REGISTRATION_SYSTEM *rs) {
 }
 
 USER * find_user(REGISTRATION_SYSTEM *rs, int user_id) {
-    char tmp_first_name[USER_NAME_LENGTH];
-    char tmp_last_name[USER_NAME_LENGTH];
-    int tmp_id;
-
-    printf("Finding the user...\n");
-
-    printf("First name:\n");
-    scanf("%s",tmp_first_name);
-
-    printf("Last name: \n");
-    scanf("%s",tmp_last_name);
-
-    printf("ID of user: \n");
-    scanf("%d",&tmp_id);
-
     for (int i = 0; i < rs->number_of_users_; i++) {
-        if(strcmp(rs->users_[i].first_name_, tmp_first_name) == 0 && rs->users_[i].id_ == tmp_id &&
-           strcmp(rs->users_[i].last_name_, tmp_last_name) == 0 ) {
+        if(rs->users_[i].id_ == user_id) {
             return &rs->users_[i];
-
         }
     }
     printf("This user is not in the system! \n");
@@ -488,11 +471,17 @@ void registration_system_login(DATA *data, TOKEN *token) {
     if (tmp_token == NULL) {
         printf("[-]Unable to authorize\n");
         system_set_message(token, 404);
+        user_init(user);
+
+    } else {
+        memcpy(token, tmp_token, sizeof(TOKEN));
+        printf("user id: %d - %s \n", user->id_, user->first_name_);
     }
-    memcpy(token, tmp_token, sizeof(TOKEN));
     send_message(data, token);
     printf("user id: %d - %s \n", user->id_, user->first_name_);
     data->state = write(data->socket, user, sizeof (USER));
+    free(user);
+    user = NULL;
 }
 
 void registration_system_registration(DATA *data, TOKEN *token){
@@ -622,6 +611,15 @@ void registration_system_find_components(REGISTRATION_SYSTEM * reg, DATA *data, 
 
 void registration_system_print_user_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
     USER * tmp_user = find_user(reg, token->user_id_);
+    system_set_message(token, SYSTEM_RESPONSE_AUTH_SUC);
+    if (tmp_user == NULL) {
+        system_set_message(token, SYSTEM_RESPONSE_UNAUTH);
+    }
+    send_message(data,token);
+    if (token->response_status_ == SYSTEM_RESPONSE_SUCCESSFUL){
+        data->state = write(data->socket, &tmp_user, sizeof (USER));
+    }
+
 }
 
 void * registration_system_start(void * data) {
