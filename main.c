@@ -8,13 +8,14 @@ int main() {
     registration_system_init(reg_sys_);
     USER * user = malloc(sizeof(USER));
     user_init(user);
-    user_set_username(user, "asd");
-    user_set_first_name(user, "asd");
-    user_set_last_name(user, "asd");
-    user_set_password(user, "asd");
+    user_set_username(user, "bsd");
+    user_set_first_name(user, "bsd");
+    user_set_last_name(user, "bsd");
+    user_set_password(user, "bsd");
     user->id_ = 6452694;
     user->credit_ = 1000;
     add_user(reg_sys_, user, NULL);
+    //write_user_to_file(user,"../source_file/users");
     SOCKET soket;
     //soket.reg = reg;
     create_connection(&soket, 11112);

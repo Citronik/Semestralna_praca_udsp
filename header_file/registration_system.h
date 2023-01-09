@@ -68,6 +68,8 @@ void registration_system_deauthorize(REGISTRATION_SYSTEM * reg, DATA *data, TOKE
 void registration_system_sort_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 void registration_system_find_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 void registration_system_print_user_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
+void write_user_to_file(USER * us, const char* file_name);
+void write_component_to_file(COMPONENT * cp, const char* file_name);
 //COMPONENT * registration_system_find_components_with_keyword(REGISTRATION_SYSTEM *reg, char * keyword);
 /*
 #ifdef	__cplusplus
@@ -418,6 +420,27 @@ _Bool load_components_from_file(REGISTRATION_SYSTEM *rs, const char *file_name) 
     fclose(f);
     return true;
 }
+
+void write_user_to_file(USER * us, const char* file_name) {
+    FILE * f = fopen(file_name, "a");
+    if (f == NULL){
+        perror("The file does not exist!\n");
+        false;
+    }
+    fprintf(f,"%s %s %s %s %d %2.f",us->first_name_,us->last_name_,us->username_,us->password_,us->id_,us->credit_);
+    fclose(f);
+}
+void write_component_to_file(COMPONENT * cp, const char* file_name) {
+    FILE * f = fopen(file_name, "a");
+    if (f == NULL){
+        perror("The file does not exist!\n");
+        false;
+    }
+    fprintf(f,"%s %s %s %d %2.f",cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
+    fclose(f);
+}
+
+
 
 USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char * username, char * pass){
     if (strlen(username) <= 0 || strlen(pass) <= 0){
