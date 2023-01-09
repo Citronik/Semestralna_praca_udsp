@@ -46,7 +46,7 @@ void print_users(const REGISTRATION_SYSTEM *rs); //prints users in the registrat
 void print_components(const REGISTRATION_SYSTEM *rs);
 _Bool registrate_user(REGISTRATION_SYSTEM *rs); //create new user
 _Bool delete_user(REGISTRATION_SYSTEM *rs); //complete delete of user
-USER * find_user(REGISTRATION_SYSTEM *rs); //finds the user in the registration system
+USER * find_user(REGISTRATION_SYSTEM *rs, int user_id); //finds the user in the registration system
 COMPONENT * find_component(REGISTRATION_SYSTEM  *rs);
 void reg_sys_to_string(REGISTRATION_SYSTEM *rs); // prints details about the registration system
 COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp); //adding component
@@ -65,6 +65,10 @@ void registration_system_registration(DATA *data, TOKEN *token);
 void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 void registration_system_logout_user(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 void registration_system_deauthorize(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
+void registration_system_sort_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
+void registration_system_find_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
+void registration_system_print_user_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
+//COMPONENT * registration_system_find_components_with_keyword(REGISTRATION_SYSTEM *reg, char * keyword);
 /*
 #ifdef	__cplusplus
 }
@@ -235,7 +239,7 @@ _Bool registrate_component(REGISTRATION_SYSTEM *rs) {
     return false;
 }
 
-USER * find_user(REGISTRATION_SYSTEM *rs) {
+USER * find_user(REGISTRATION_SYSTEM *rs, int user_id) {
     char tmp_first_name[USER_NAME_LENGTH];
     char tmp_last_name[USER_NAME_LENGTH];
     int tmp_id;
@@ -296,7 +300,7 @@ COMPONENT * find_component(REGISTRATION_SYSTEM  * rs) {
 
 
 _Bool delete_user(REGISTRATION_SYSTEM *rs) {
-    USER *tmp_user = find_user(rs);
+    USER *tmp_user = find_user(rs, 100);
     if(tmp_user == NULL){
         printf("Incorrect parameters!\n");
         return false;
@@ -482,8 +486,9 @@ void registration_system_registration(DATA *data, TOKEN *token){
 
 void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
     int index_of_component = 0;
-    printf("Number of components%d\n", reg->number_of_components);
-    pthread_mutex_lock(&mut_component_);
+    printf("Number of components %d\n", reg->number_of_components);
+    system_set_message(token, SYSTEM_RESPONSE_AUTH_SUC);
+    //pthread_mutex_lock(&mut_component_);
     while (index_of_component < reg->number_of_components) {
         token->response_status_ = reg->number_of_components;
         token->service_type_ = index_of_component;
@@ -491,7 +496,7 @@ void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *d
         send_message(data, token);
         ++index_of_component;
     }
-    pthread_mutex_unlock(&mut_component_);
+    //pthread_mutex_unlock(&mut_component_);
     token->service_type_ = index_of_component;
     strcpy(token->response_, "END");
     send_message(data, token);
@@ -533,6 +538,69 @@ void registration_system_logout_user(REGISTRATION_SYSTEM * reg, DATA * data, TOK
     send_message(data, token);
 }
 
+void registration_system_sort_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
+    _Bool (*function_to_sort_components)(const COMPONENT *, const COMPONENT *);
+    switch (token->response_status_) {
+        case 1:
+            function_to_sort_components = component_compare_by_price;
+            break;
+        case 2:
+            function_to_sort_components = component_compare_by_name;
+            break;
+        case 3:
+            function_to_sort_components = component_compare_by_year;
+            break;
+    }
+    int min_index = 0;
+    for(int i = 0; i < reg->number_of_components - 1; i++) {
+        min_index = i;
+        for(int j = i + 1; j < reg->number_of_components; j++) {
+            if(function_to_sort_components(&reg->components_[i], &reg->components_[j])) {
+                min_index = j;
+            }
+        }
+        if(min_index != i)
+        {
+            COMPONENT temp;
+            memcpy(&temp, &reg->components_[i], sizeof(COMPONENT));
+            memcpy(&reg->components_[i], &reg->components_[min_index], sizeof(COMPONENT));
+            memcpy(&reg->components_[min_index], &temp, sizeof(COMPONENT));
+        }
+    }
+}
+
+void registration_system_find_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
+    //registration_system_find_components_with_keyword(reg, token->content_);
+    int number_of_comp = 0;
+    COMPONENT *tmp_components[CAPACITY];
+    for (int i = 0; i < reg->number_of_components; ++i) {
+        if (component_contains_key(&reg->components_[i], token->content_)){
+            tmp_components[number_of_comp] = &reg->components_[i];
+            ++number_of_comp;
+        }
+    }
+    int index_of_component = 0;
+    printf("Number of searched components: %d\n", number_of_comp);
+    system_set_message(token, SYSTEM_RESPONSE_AUTH_SUC);
+    //pthread_mutex_lock(&mut_component_);
+    while (index_of_component < number_of_comp) {
+        token->response_status_ = number_of_comp;
+        token->service_type_ = index_of_component;
+        component_to_string(tmp_components[index_of_component], token->content_);
+        send_message(data, token);
+        ++index_of_component;
+    }
+    //pthread_mutex_unlock(&mut_component_);
+    token->service_type_ = index_of_component;
+    strcpy(token->response_, "END");
+    send_message(data, token);
+    printf("All searched components are printed\n");
+}
+
+void registration_system_print_user_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
+    USER * tmp_user = find_user(reg, token->user_id_);
+}
+
 void * registration_system_start(void * data) {
     DATA * datas = (DATA *)data;
     TOKEN * token = calloc(1,sizeof (TOKEN));
@@ -561,6 +629,7 @@ void * registration_system_start(void * data) {
             case 4:
                 //SORT COMPONENTS
                 printf("[+]SORTING COMPONENTS\n");
+                registration_system_sort_components(reg_sys_, datas, token);
                 break;
             case 5:
                 //BUY COMPONENT
@@ -573,10 +642,12 @@ void * registration_system_start(void * data) {
             case 7:
                 //DISPLAY YOUR COMPONENTS
                 printf("[+]DISPLAYING YOUR COMPONENTS\n");
+                registration_system_print_user_components(reg_sys_, datas, token);
                 break;
             case 8:
                 //FIND COMPONENTS
                 printf("[+]SEARCHING FOR COMPONENTS\n");
+                registration_system_find_components(reg_sys_, datas, token);
                 break;
             case 9:
                 //LOGOUT

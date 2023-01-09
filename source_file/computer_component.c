@@ -24,3 +24,24 @@ char* component_to_string(const COMPONENT *cp, char *dest) {
     sprintf(dest, "Manufacturer: %s, type: %s, model: %s, year of production: %d, price: %.2f€  \n",cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
     return dest;
 }
+
+_Bool component_compare_by_price(const COMPONENT *cp1, const COMPONENT *cp2){
+    return cp1->price_ > cp2->price_;
+}
+
+_Bool component_compare_by_name(const COMPONENT *cp1, const COMPONENT *cp2){
+    return strcmp(cp1->model_, cp2->model_) > 0;
+}
+
+_Bool component_compare_by_year(const COMPONENT *cp1, const COMPONENT *cp2){
+    return cp1->year_of_production_ > cp2->year_of_production_;
+}
+
+_Bool component_contains_key(const COMPONENT *cp1, char *keyword){
+    char dest[BUFFER] = {0};
+    component_to_string(cp1, dest);
+    for (int i = 0; dest[i] != '\0'; i++) {
+        dest[i] = tolower(dest[i]);
+    }
+    return strstr(dest, keyword) != NULL;
+}
