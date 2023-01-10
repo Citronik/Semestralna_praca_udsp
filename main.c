@@ -20,7 +20,7 @@ int main() {
     //write_user_to_file(user,"../source_file/users");
     SOCKET soket;
     //soket.reg = reg;
-    create_connection(&soket, 11111);
+    create_connection(&soket, 11112);
     //pthread_t threads[MAX_POCET_POUZIVATELOV];
     pthread_t thread_new_users;
     pthread_create(&thread_new_users, NULL, server_handle_new_users, (void *)&soket);

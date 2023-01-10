@@ -23,12 +23,15 @@ _Bool compare_users(const USER *us1, const USER *us2){
 COMPONENT * add_component_to_user(USER *us, COMPONENT *cp) {
     for (int i = 0; i < us->number_of_owned_components_; i++) {
         if (compare_components(cp, &us->owned_components_[i])){
+            printf("%s  %.2f\n", cp->model_, cp->price_);
             return &us->owned_components_[i];
         }
-
     }
+    printf("%s  %.2f\n", cp->model_, cp->price_);
+    printf("%s  %d  %.2f\n", us->username_, us->number_of_owned_components_, us->credit_);
     if (us->number_of_owned_components_ >= USER_MAX_COMPONENTS || us->credit_ < cp->price_) {
-        printf("User %s (%s %s) reached maximum capacity of owned items or does not have enough credit on the account!\n",us->username_,us->first_name_,us->last_name_);
+        printf("User %s (%s %s) reached maximum capacity %d of owned items or does not have enough credit %.2f on the account!\n"
+               ,us->username_,us->first_name_,us->last_name_, us->number_of_owned_components_, us->credit_);
         return NULL;
     }
     us->owned_components_[us->number_of_owned_components_] = * cp;
@@ -49,7 +52,7 @@ COMPONENT * remove_component_from_user(USER *us, int component_id) {
     printf("[+]USER %s COMPONENT %s FOUND!\n", us->username_, us->owned_components_[component_id].model_);
 
     if (component_id != us->number_of_owned_components_-1){
-        printf("%s", *(&us->owned_components_[component_id]+sizeof(COMPONENT))->model_);
+        printf("%s\n", us->owned_components_[component_id+1].model_);
         memcpy(&us->owned_components_[component_id], &us->owned_components_[component_id+1]
                ,((us->number_of_owned_components_-1)-component_id)*sizeof(COMPONENT));
     }
@@ -67,7 +70,7 @@ void recharge_credit(USER *us, double value) {
     if(value > 0) {
         us->credit_ += value;
         printf("Credit of the user %s %s, was increased by %.2f€ \n",us->first_name_,us->last_name_,value);
-        printf("The user %s %s has credit %.2f€\n",us->first_name_,us->last_name_,us->credit_);
+        printf("The user %s has credit %.2f€\n",us->username_,us->credit_);
     } else {
         printf("Top-up credit must be greater than 0 euros!\n");
     }

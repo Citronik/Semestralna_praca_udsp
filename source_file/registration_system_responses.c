@@ -55,7 +55,7 @@ void system_set_message(TOKEN * token, int message_type){
             strcpy(token->response_, system_message_user_not_found);
             break;
         case SYSTEM_RESPONSE_SUC_OPERATION:
-            token->response_status_ = SYSTEM_RESPONSE_UNAUTH;
+            token->response_status_ = SYSTEM_RESPONSE_SUCCESSFUL;
             token->service_type_ = SYSTEM_RESPONSE_INIT_STATE;
             strcpy(token->response_, system_message_suc_operation);
             break;

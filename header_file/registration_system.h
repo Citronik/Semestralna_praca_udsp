@@ -15,6 +15,7 @@ extern "C" {
 
 #define CAPACITY 30
 #define BUFFER 150 // we use this for reading from file
+
 typedef struct registration_system {
     USER users_[CAPACITY];
     COMPONENT components_[CAPACITY];
@@ -72,6 +73,7 @@ void write_user_to_file(USER * us, const char* file_name);
 void write_component_to_file(COMPONENT * cp, const char* file_name);
 void registration_system_buy_component(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 _Bool registration_system_return_component(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
+_Bool registration_system_top_up_credit(REGISTRATION_SYSTEM *reg, DATA *data, TOKEN *token);
 //COMPONENT * registration_system_find_components_with_keyword(REGISTRATION_SYSTEM *reg, char * keyword);
 /*
 #ifdef	__cplusplus
@@ -98,21 +100,23 @@ USER* add_user(REGISTRATION_SYSTEM *rs, USER *us, TOKEN *token) {
         printf("Maximum capacity has been reached!\n");
         return NULL;
     }
+    pthread_mutex_lock(&mut_user_);
     for (int i = 0; i < rs->number_of_users_; i++) {
         if (compare_users(us, &rs->users_[i])){
             system_set_message(token, 5);
             printf("User already in system!\n");
+            pthread_mutex_unlock(&mut_user_);
             return &rs->users_[i];
         }
     }
     us->id_ = 1000000 + rand() % (10000000-1000000);
     rs->users_[rs->number_of_users_] = * us;
     rs->number_of_users_++;
+    us->number_of_owned_components_ = 0;
+    pthread_mutex_unlock(&mut_user_);
     printf("User: %s %s , username: %s, password: %s, ID: %d credit: %.2f €, has been added to the registration system!\n",
            us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit_);
-    us->number_of_owned_components_ = 0;
     return &rs->users_[rs->number_of_users_-1];
-
 }
 
 COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp) {
@@ -120,13 +124,16 @@ COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp) {
         printf("Maximum capacity has been reached!\n");
         return NULL;
     }
+    pthread_mutex_lock(&mut_component_);
     for (int i = 0; i < rs->number_of_components; i++) {
         if (compare_components(cp, &rs->components_[i])){
+            pthread_mutex_unlock(&mut_component_);
             return &rs->components_[i];
         }
     }
     rs->components_[rs->number_of_components] = * cp;
     rs->number_of_components++;
+    pthread_mutex_unlock(&mut_component_);
     printf("Adding the component: \n");
     printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %.2f\n",
            cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
@@ -138,7 +145,7 @@ COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp){
         printf("There are not any computer components in the system!\n");
         return false;
     }
-
+    pthread_mutex_lock(&mut_component_);
     for(int i = 0; i < rs->number_of_components; i++) {
         if(compare_components(&rs->components_[i], cp)){
             *cp = rs->components_[i];
@@ -147,16 +154,19 @@ COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp){
             rs->number_of_components--;
         }
     }
+    pthread_mutex_unlock(&mut_component_);
     printf("Removing the component: \n");
     printf("Manufacturer: %s , type: %s, model: %s, year: %d, price: %lf\n",
            cp->manufacturer_,cp->type_,cp->model_,cp->year_of_production_,cp->price_);
-
+    pthread_mutex_lock(&mut_component_);
     for (int i = 0; i < rs->number_of_users_; i++) {
         if (!compare_components(cp, &rs->components_[i])){
             return &rs->components_[i];
         }
-        printf("Component is not in the registration system\n");
     }
+    pthread_mutex_unlock(&mut_component_);
+    printf("Component is not in the registration system\n");
+    return NULL;
 }
 
 USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
@@ -164,7 +174,7 @@ USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
         printf("There are not any users in the system!\n");
         return false;
     }
-
+    pthread_mutex_lock(&mut_user_);
     for(int i = 0; i < rs->number_of_users_; i++) {
         if(compare_users(&rs->users_[i], us)){
             *us = rs->users_[i];
@@ -178,10 +188,13 @@ USER* remove_user(REGISTRATION_SYSTEM *rs, USER *us) {
 
     for (int i = 0; i < rs->number_of_users_; i++) {
         if (!compare_users(us, &rs->users_[i])){
+            pthread_mutex_unlock(&mut_user_);
             return &rs->users_[i];
         }
-        printf("User is not in the registration system\n");
     }
+    pthread_mutex_unlock(&mut_user_);
+    printf("User is not in the registration system\n");
+    return NULL;
 }
 
 void print_users(const REGISTRATION_SYSTEM *rs) {
@@ -189,10 +202,12 @@ void print_users(const REGISTRATION_SYSTEM *rs) {
         printf("There are not any users in the system!\n");
     }
     char tmpStr[BUFFER];
+    pthread_mutex_lock(&mut_user_);
     for (int i = 0; i < rs->number_of_users_; i++) {
         user_to_string(&rs->users_[i], tmpStr);
         printf("%s", tmpStr);
     }
+    pthread_mutex_unlock(&mut_user_);
 }
 
 void print_components(const REGISTRATION_SYSTEM *rs) {
@@ -200,10 +215,12 @@ void print_components(const REGISTRATION_SYSTEM *rs) {
         printf("There are not any components in the system!\n");
     }
     char tmpStr[BUFFER];
+    pthread_mutex_lock(&mut_component_);
     for (int i = 0; i < rs->number_of_components; i++) {
         component_to_string(&rs->components_[i], tmpStr);
         printf("%s", tmpStr);
     }
+    pthread_mutex_unlock(&mut_component_);
 }
 
 _Bool registrate_component(REGISTRATION_SYSTEM *rs) {
@@ -244,12 +261,15 @@ _Bool registrate_component(REGISTRATION_SYSTEM *rs) {
 }
 
 USER * find_user(REGISTRATION_SYSTEM *rs, int user_id) {
+    pthread_mutex_lock(&mut_user_);
     for (int i = 0; i < rs->number_of_users_; ++i) {
         if (rs->users_[i].id_ == user_id) {
+            pthread_mutex_unlock(&mut_user_);
             printf("[+]USER: %d FOUND\n", user_id);
             return &rs->users_[i];
         }
     }
+    pthread_mutex_unlock(&mut_user_);
     printf("[-]USER: %d NOT FOUND\n", user_id);
     return NULL;
 }
@@ -289,31 +309,6 @@ void buy_item_for_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
     add_component_to_user(&rs->users_[index], cp);
     rs->sales += cp->price_;
 }
-
-
-/*void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
-    int index = 0;
-    for (int i = 0; i < rs->number_of_users_; i++) {
-        if (compare_users(us, &rs->users_[i])) {
-            index = i;
-        }
-    }
-    remove_component_from_user(&rs->users_[index], cp);
-}*/
-
-void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us){
-    int index = 0;
-    for (int i = 0; i < rs->number_of_users_; i++) {
-        if (compare_users(us, &rs->users_[i])) {
-            index = i;
-        }
-    }
-    double tmp;
-    printf("Select value of credit which you want to charge to user %s (%s %s)\n", us->username_, us->first_name_,us->last_name_);
-    scanf("%lf", &tmp);
-    recharge_credit(&rs->users_[index], tmp);
-}
-
 
 _Bool load_users_from_file(REGISTRATION_SYSTEM *rs, const char *file_name) {
     FILE * f = fopen(file_name, "rt");
@@ -410,12 +405,15 @@ USER * registration_system_find_by_username_pass(REGISTRATION_SYSTEM *reg, char 
         printf("[-]Wrong data!\n");
         return NULL;
     }
+    pthread_mutex_lock(&mut_user_);
     for (int i = 0; i < reg->number_of_users_; ++i) {
         if (strcmp(username, reg->users_[i].username_) == 0 & strcmp(pass, reg->users_[i].password_) == 0){
+            pthread_mutex_unlock(&mut_user_);
             printf("[+]User found %d\n", reg->users_[i].id_);
             return &reg->users_[i];
         }
     }
+    pthread_mutex_unlock(&mut_user_);
     printf("[-]Cannot find the User\n");
     return NULL;
 }
@@ -426,6 +424,7 @@ TOKEN * registration_system_authentificate(REGISTRATION_SYSTEM * reg, USER * use
         return NULL;
     }
     TOKEN * active_user_token = NULL;
+    pthread_mutex_lock(&mut_token_);
     for (int i = 0; i < reg->number_of_active_users_; ++i) {
         if (user_found->id_ == reg->active_users_[i]->user_id_) {
             active_user_token = reg->active_users_[i];
@@ -433,10 +432,17 @@ TOKEN * registration_system_authentificate(REGISTRATION_SYSTEM * reg, USER * use
             break;
         }
     }
+    pthread_mutex_unlock(&mut_token_);
     if (active_user_token == NULL) {
-        active_user_token = (TOKEN * ) malloc(sizeof(TOKEN));
+        active_user_token = (TOKEN *)malloc(sizeof(TOKEN));
         token_init(active_user_token);
         active_user_token->user_id_ = user_found->id_;
+        pthread_mutex_lock(&mut_token_);
+        if (reg->number_of_active_users_<= CAPACITY) {
+            reg->active_users_[reg->number_of_active_users_] = active_user_token;
+            ++reg->number_of_active_users_;
+        }
+        pthread_mutex_unlock(&mut_token_);
         system_set_message(active_user_token, 2);
     }
     memcpy(user, user_found, sizeof(USER));
@@ -452,7 +458,6 @@ void registration_system_login(DATA *data, TOKEN *token) {
         printf("[-]Unable to authorize\n");
         system_set_message(token, 404);
         user_init(user);
-
     } else {
         memcpy(token, tmp_token, sizeof(TOKEN));
         printf("user id: %d - %s \n", user->id_, user->first_name_);
@@ -480,7 +485,7 @@ void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *d
     int index_of_component = 0;
     printf("Number of components %d\n", reg->number_of_components);
     system_set_message(token, SYSTEM_RESPONSE_AUTH_SUC);
-    //pthread_mutex_lock(&mut_component_);
+    pthread_mutex_lock(&mut_component_);
     while (index_of_component < reg->number_of_components) {
         token->response_status_ = reg->number_of_components;
         token->service_type_ = index_of_component;
@@ -488,33 +493,40 @@ void registration_system_print_all_components(REGISTRATION_SYSTEM * reg, DATA *d
         send_message(data, token);
         ++index_of_component;
     }
-    //pthread_mutex_unlock(&mut_component_);
+    pthread_mutex_unlock(&mut_component_);
     token->service_type_ = index_of_component;
     strcpy(token->response_, "END");
     send_message(data, token);
-    printf("All components are printed\n");
+    printf("[+]All components are printed\n");
 }
 
 void registration_system_deauthorize(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
     TOKEN * tmp_token = NULL;
     int index = RAND_MAX;
+    printf("[+]Starting active tokens: %d\n", reg->number_of_active_users_);
+    pthread_mutex_lock(&mut_token_);
     for (int i = 0; i < reg->number_of_active_users_; ++i) {
         if (token_compare(reg->active_users_[i], token)){
             tmp_token = reg->active_users_[i];
+            printf("[+]ACTIVE TOKEN %d FOUND!\n", tmp_token->user_id_);
             index = i;
         }
     }
+    pthread_mutex_unlock(&mut_token_);
     if (tmp_token == NULL){
+        printf("[-]ACTIVE TOKEN %d  NOT FOUND!\n", tmp_token->user_id_);
         system_set_message(token, 404);
         send_message(data, token);
         return;
     }
     token->user_id_ = 0;
+    pthread_mutex_lock(&mut_token_);
     if (index < reg->number_of_active_users_) {
-        printf("Editing active users\n");
-        memcpy(tmp_token,tmp_token+sizeof(TOKEN),reg->number_of_active_users_-index* sizeof(TOKEN));
+        printf("[+]EDITING ACTIVE USERS\n");
+        memcpy(tmp_token,tmp_token+sizeof(TOKEN),(reg->number_of_active_users_-1-index)* sizeof(TOKEN));
     }
     --reg->number_of_active_users_;
+    pthread_mutex_unlock(&mut_token_);
     system_set_message(token, SYSTEM_RESPONSE_USR_LOGOUT);
     send_message(data, token);
 }
@@ -524,7 +536,7 @@ void registration_system_logout_user(REGISTRATION_SYSTEM * reg, DATA * data, TOK
     data->state = read(data->socket, &tmp_user, sizeof (USER));
     registration_system_deauthorize(reg, data, token);
     USER new_user = {0};
-    printf("Sending new user\n");
+    printf("[+]SENDING NEW USER\n");
     data->state = write(data->socket, &new_user, sizeof (USER));
     system_set_message(token, SYSTEM_RESPONSE_USR_LOGOUT);
     send_message(data, token);
@@ -544,6 +556,7 @@ void registration_system_sort_components(REGISTRATION_SYSTEM * reg, DATA *data, 
             break;
     }
     int min_index = 0;
+    pthread_mutex_lock(&mut_component_);
     for(int i = 0; i < reg->number_of_components - 1; i++) {
         min_index = i;
         for(int j = i + 1; j < reg->number_of_components; j++) {
@@ -559,20 +572,23 @@ void registration_system_sort_components(REGISTRATION_SYSTEM * reg, DATA *data, 
             memcpy(&reg->components_[min_index], &temp, sizeof(COMPONENT));
         }
     }
+    pthread_mutex_unlock(&mut_component_);
 }
 
 void registration_system_find_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
     //registration_system_find_components_with_keyword(reg, token->content_);
     int number_of_comp = 0;
     COMPONENT *tmp_components[CAPACITY];
+    pthread_mutex_lock(&mut_component_);
     for (int i = 0; i < reg->number_of_components; ++i) {
         if (component_contains_key(&reg->components_[i], token->content_)){
             tmp_components[number_of_comp] = &reg->components_[i];
             ++number_of_comp;
         }
     }
+    pthread_mutex_unlock(&mut_component_);
     int index_of_component = 0;
-    printf("Number of searched components: %d\n", number_of_comp);
+    //printf("Number of searched components: %d\n", number_of_comp);
     system_set_message(token, SYSTEM_RESPONSE_AUTH_SUC);
     //pthread_mutex_lock(&mut_component_);
     while (index_of_component < number_of_comp) {
@@ -586,7 +602,7 @@ void registration_system_find_components(REGISTRATION_SYSTEM * reg, DATA *data, 
     token->service_type_ = index_of_component;
     strcpy(token->response_, "END");
     send_message(data, token);
-    printf("All searched components are printed\n");
+    printf("[+]ALL SEARCHED COMPONENTS ARE PRINTED\n");
 }
 
 void registration_system_print_user_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
@@ -599,7 +615,6 @@ void registration_system_print_user_components(REGISTRATION_SYSTEM * reg, DATA *
     if (token->response_status_ == SYSTEM_RESPONSE_SUCCESSFUL){
         data->state = write(data->socket, tmp_user, sizeof (USER));
     }
-
 }
 
 void registration_system_buy_component(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
@@ -651,15 +666,45 @@ _Bool registration_system_return_component(REGISTRATION_SYSTEM * reg, DATA *data
     return true;
 }
 
+_Bool registration_system_top_up_credit(REGISTRATION_SYSTEM *reg, DATA *data, TOKEN *token) {
+    double credit = 0;
+    char * eptr;
+    credit = strtod(token->content_, &eptr);
+    printf("credit: %.2f\n", credit);
+    system_set_message(token, SYSTEM_RESPONSE_SUC_OPERATION);
+    if (credit <= 0) {
+        system_set_message(token, SYSTEM_RESPONSE_UNAUTH);
+        send_message(data, token);
+        return false;
+    }
+    USER * tmp_user = find_user(reg, token->user_id_);
+    if (tmp_user == NULL) {
+        system_set_message(token, SYSTEM_RESPONSE_USER_NOT_FOUND);
+        send_message(data, token);
+        return false;
+    }
+    recharge_credit(tmp_user, credit);
+    send_message(data, token);
+    //usleep(500);
+    data->state = write(data->socket, tmp_user, sizeof(USER));
+    printf("TOP UP CREDIT DONE %.2f\n", tmp_user->credit_);
+    return true;
+}
+
 void * registration_system_start(void * data) {
     DATA * datas = (DATA *)data;
     TOKEN * token = calloc(1,sizeof (TOKEN));
     token_init(token);
     system_set_message(token, token->response_status_);
     send_message(datas, token);
+    _Bool manual_end = false;
     do {
         printf("waiting for client\n");
-        read_message(datas, token);
+        int answer = read_message(datas, token);
+        if (answer != 0){
+            manual_end = true;
+            break;
+        }
         switch (token->service_type_) {
             case 1:
                 //registration create user account and after registration login created user
@@ -709,18 +754,19 @@ void * registration_system_start(void * data) {
             case 10:
                 //TOP UP CREDIT
                 printf("[+]TOP UP CREDIT\n");
-
+                _Bool random_answer = registration_system_top_up_credit(reg_sys_, datas, token);
                 break;
             case 0:
                 //EXIT
                 printf("[+]USER ENDING SESSION\n");
+                read_message(datas, token);
                 break;
             default:
                 //warning message
                 printf("[+]Wrong key\n");
                 break;
         }
-    } while(token_is_active(token));
+    } while(token_is_active(token) && !manual_end);
 
     free(token);
     token = NULL;

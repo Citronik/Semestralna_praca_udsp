@@ -14,6 +14,7 @@ void token_init(TOKEN * token){
 }
 
 _Bool token_compare(TOKEN * token1, TOKEN * token2){
+    printf("Comparing tokens : %d  %d", token1->user_id_, token2->user_id_);
     return token1->user_id_ == token2->user_id_;
 }
 
