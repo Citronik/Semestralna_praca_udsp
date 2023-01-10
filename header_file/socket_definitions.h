@@ -32,7 +32,7 @@ typedef struct data {
     char userName[USER_LENGTH + 1];
     pthread_mutex_t mutex;
     int socket;
-    int state;
+    size_t state;
     int stop;
 } DATA;
 

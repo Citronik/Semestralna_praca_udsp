@@ -47,7 +47,7 @@ void print_components(const REGISTRATION_SYSTEM *rs);
 _Bool registrate_user(REGISTRATION_SYSTEM *rs); //create new user
 _Bool delete_user(REGISTRATION_SYSTEM *rs); //complete delete of user
 USER * find_user(REGISTRATION_SYSTEM *rs, int user_id); //finds the user in the registration system
-COMPONENT * find_component(REGISTRATION_SYSTEM  *rs);
+COMPONENT * find_component(REGISTRATION_SYSTEM  *rs, int component_id);
 void reg_sys_to_string(REGISTRATION_SYSTEM *rs); // prints details about the registration system
 COMPONENT* add_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp); //adding component
 COMPONENT* remove_component(REGISTRATION_SYSTEM *rs, COMPONENT *cp);  //removing component
@@ -70,6 +70,8 @@ void registration_system_find_components(REGISTRATION_SYSTEM * reg, DATA *data, 
 void registration_system_print_user_components(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 void write_user_to_file(USER * us, const char* file_name);
 void write_component_to_file(COMPONENT * cp, const char* file_name);
+void registration_system_buy_component(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
+_Bool registration_system_return_component(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token);
 //COMPONENT * registration_system_find_components_with_keyword(REGISTRATION_SYSTEM *reg, char * keyword);
 /*
 #ifdef	__cplusplus
@@ -106,7 +108,7 @@ USER* add_user(REGISTRATION_SYSTEM *rs, USER *us, TOKEN *token) {
     us->id_ = 1000000 + rand() % (10000000-1000000);
     rs->users_[rs->number_of_users_] = * us;
     rs->number_of_users_++;
-    printf("User: %s %s , username: %s, password: %s, ID: %d credit: %lf €, has been added to the registration system!\n",
+    printf("User: %s %s , username: %s, password: %s, ID: %d credit: %.2f €, has been added to the registration system!\n",
            us->first_name_,us->last_name_,us->username_,us->password_,us->id_, us->credit_);
     us->number_of_owned_components_ = 0;
     return &rs->users_[rs->number_of_users_-1];
@@ -242,45 +244,23 @@ _Bool registrate_component(REGISTRATION_SYSTEM *rs) {
 }
 
 USER * find_user(REGISTRATION_SYSTEM *rs, int user_id) {
-    for (int i = 0; i < rs->number_of_users_; i++) {
-        if(rs->users_[i].id_ == user_id) {
+    for (int i = 0; i < rs->number_of_users_; ++i) {
+        if (rs->users_[i].id_ == user_id) {
+            printf("[+]USER: %d FOUND\n", user_id);
             return &rs->users_[i];
         }
     }
-    printf("This user is not in the system! \n");
+    printf("[-]USER: %d NOT FOUND\n", user_id);
     return NULL;
 }
 
-COMPONENT * find_component(REGISTRATION_SYSTEM  * rs) {
-    char tmp_manufacturer[CHARACTERS];
-    char tmp_type[CHARACTERS];
-    char tmp_model[CHARACTERS];
-    int tmp_year;
-
-    printf("Finding the component...\n");
-
-    printf("Manufacturer:\n");
-    scanf("%s",tmp_manufacturer);
-
-    printf("Type of hardware: \n");
-    scanf("%s",tmp_type);
-
-    printf("Model: \n");
-    scanf("%s",tmp_model);
-
-    printf("Year of production: \n");
-    scanf("%d",&tmp_year);
-
-    for (int i = 0; i < rs->number_of_users_; i++) {
-        if(strcmp(rs->components_[i].manufacturer_, tmp_manufacturer) == 0 && rs->components_[i].year_of_production_ == tmp_year &&
-           strcmp(rs->components_[i].type_, tmp_type) == 0 &&
-           strcmp(rs->components_[i].model_, tmp_model) == 0) {
-            return &rs->components_[i];
-
-        }
+COMPONENT * find_component(REGISTRATION_SYSTEM  * rs, int component_id) {
+    if (component_id < 0 || component_id >= rs->number_of_components){
+        printf("[-]COMPONENT: %d NOT FOUND\n", component_id);
+        return NULL;
     }
-    printf("This component is not in the system! \n");
-    return NULL;
+    printf("[+]COMPONENT: %d FOUND\n", component_id);
+    return &rs->components_[component_id];
 }
 
 
@@ -311,7 +291,7 @@ void buy_item_for_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
 }
 
 
-void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
+/*void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
     int index = 0;
     for (int i = 0; i < rs->number_of_users_; i++) {
         if (compare_users(us, &rs->users_[i])) {
@@ -319,7 +299,7 @@ void remove_item_from_user(REGISTRATION_SYSTEM *rs,USER *us,COMPONENT *cp){
         }
     }
     remove_component_from_user(&rs->users_[index], cp);
-}
+}*/
 
 void charge_credit_for_user(REGISTRATION_SYSTEM *rs, USER *us){
     int index = 0;
@@ -617,9 +597,58 @@ void registration_system_print_user_components(REGISTRATION_SYSTEM * reg, DATA *
     }
     send_message(data,token);
     if (token->response_status_ == SYSTEM_RESPONSE_SUCCESSFUL){
-        data->state = write(data->socket, &tmp_user, sizeof (USER));
+        data->state = write(data->socket, tmp_user, sizeof (USER));
     }
 
+}
+
+void registration_system_buy_component(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
+    USER * tmp_user = find_user(reg, token->user_id_);
+    int component_id = token->response_status_;
+    system_set_message(token, SYSTEM_RESPONSE_SUC_OPERATION);
+    if (tmp_user == NULL){
+        printf("[-]USER: %d NOT FOUND!\n", token->user_id_);
+        system_set_message(token, SYSTEM_RESPONSE_USER_NOT_FOUND);
+    }
+    COMPONENT * tmp_component = find_component(reg, component_id);
+    if (tmp_component == NULL){
+        printf("[-]COMPO: %d NOT FOUND!\n", token->user_id_);
+        system_set_message(token, SYSTEM_RESPONSE_ITEM_NOT_FOUND);
+    }
+    COMPONENT * added_component = NULL;
+    if (token->response_status_ != SYSTEM_RESPONSE_UNAUTH){
+        added_component = add_component_to_user(tmp_user, tmp_component);
+        system_set_message(token, SYSTEM_RESPONSE_SUC_OPERATION);
+    }
+    if (token->response_status_ == SYSTEM_RESPONSE_UNAUTH) {
+        system_set_message(token, SYSTEM_RESPONSE_UNSUC_OPERATION);
+    }
+    send_message(data, token);
+    if (added_component != NULL){
+        printf("[+]COMPO: %d SUCCESFULLY ADDED TO USER: %d!\n"
+                    , token->response_status_, token->user_id_);
+            data->state = write(data->socket, tmp_user, sizeof (USER));
+    }
+}
+
+_Bool registration_system_return_component(REGISTRATION_SYSTEM * reg, DATA *data, TOKEN *token){
+    USER * tmp_user = find_user(reg, token->user_id_);
+    int component_id = token->response_status_;
+    system_set_message(token, SYSTEM_RESPONSE_SUC_OPERATION);
+    if (tmp_user == NULL) {
+        system_set_message(token, SYSTEM_RESPONSE_USER_NOT_FOUND);
+        send_message(data, token);
+        return false;
+    }
+    COMPONENT * removed_component = remove_component_from_user(tmp_user, component_id);
+    if (removed_component == NULL){
+        system_set_message(token, SYSTEM_RESPONSE_ITEM_NOT_FOUND);
+        send_message(data, token);
+        return false;
+    }
+    send_message(data, token);
+    data->state = write(data->socket, tmp_user, sizeof (USER));
+    return true;
 }
 
 void * registration_system_start(void * data) {
@@ -655,10 +684,12 @@ void * registration_system_start(void * data) {
             case 5:
                 //BUY COMPONENT
                 printf("[+]BUYING COMPONENT\n");
+                registration_system_buy_component(reg_sys_, datas, token);
                 break;
             case 6:
                 //RETURN COMPONENT
                 printf("[+]RETURNING COMPONENT\n");
+                registration_system_return_component(reg_sys_, datas, token);
                 break;
             case 7:
                 //DISPLAY YOUR COMPONENTS
@@ -676,6 +707,11 @@ void * registration_system_start(void * data) {
                 registration_system_logout_user(reg_sys_, datas, token);
                 break;
             case 10:
+                //TOP UP CREDIT
+                printf("[+]TOP UP CREDIT\n");
+
+                break;
+            case 0:
                 //EXIT
                 printf("[+]USER ENDING SESSION\n");
                 break;
@@ -699,7 +735,7 @@ void * server_handle_new_users(void * datas) {
         if (soket->newsockfd < 0)
         {
             perror("[-]ERROR on accept");
-            exit(1);
+            //exit(1);
         }
         DATA data;
         data.socket = soket->newsockfd;

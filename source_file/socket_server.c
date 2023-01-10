@@ -14,13 +14,13 @@ int create_connection(SOCKET * soket, int network_port) {
     soket->sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (soket->sockfd < 0)
     {
-        perror("Error creating socket");
+        perror("[-]Error creating socket");
         return 1;
     }
 
     if (bind(soket->sockfd, (struct sockaddr*)&soket->serv_addr, sizeof(soket->serv_addr)) < 0)
     {
-        perror("Error binding socket address");
+        perror("[-]Error binding socket address");
         return 2;
     }
 

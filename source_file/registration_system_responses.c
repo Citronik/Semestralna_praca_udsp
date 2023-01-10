@@ -44,6 +44,26 @@ void system_set_message(TOKEN * token, int message_type){
             token->user_id_ = SYSTEM_RESPONSE_INIT;
             strcpy(token->response_, system_message_user_logout);
             break;
+        case SYSTEM_RESPONSE_ITEM_NOT_FOUND:
+            token->response_status_ = SYSTEM_RESPONSE_UNAUTH;
+            token->service_type_ = SYSTEM_RESPONSE_INIT_STATE;
+            strcpy(token->response_, system_message_item_not_found);
+            break;
+        case SYSTEM_RESPONSE_USER_NOT_FOUND:
+            token->response_status_ = SYSTEM_RESPONSE_UNAUTH;
+            token->service_type_ = SYSTEM_RESPONSE_INIT_STATE;
+            strcpy(token->response_, system_message_user_not_found);
+            break;
+        case SYSTEM_RESPONSE_SUC_OPERATION:
+            token->response_status_ = SYSTEM_RESPONSE_UNAUTH;
+            token->service_type_ = SYSTEM_RESPONSE_INIT_STATE;
+            strcpy(token->response_, system_message_suc_operation);
+            break;
+        case SYSTEM_RESPONSE_UNSUC_OPERATION:
+            token->response_status_ = SYSTEM_RESPONSE_UNAUTH;
+            token->service_type_ = SYSTEM_RESPONSE_INIT_STATE;
+            strcpy(token->response_, system_message_unsuc_operation);
+            break;
         default:
             token->response_status_ = SYSTEM_RESPONSE_UNAUTH;
             strcpy(token->response_, system_message_unauth);

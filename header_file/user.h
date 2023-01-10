@@ -33,7 +33,7 @@ void user_set_first_name(USER *us, char * first_name);
 void user_set_last_name(USER *us, char * last_name);
 void user_set_username(USER *us, char * username);
 void user_set_password(USER *us, char * password);
-COMPONENT * remove_component_from_user(USER *us, COMPONENT *cp);
+COMPONENT * remove_component_from_user(USER *us, int component_id);
 COMPONENT * add_component_to_user(USER *us, COMPONENT *cp);
 void user_init(USER * user);
 #endif //SEMESTRALNA_PRACA_UDSP_USER_H
